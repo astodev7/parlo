@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {hashPassword,verifyPassword,newToken,tokenHash,validPassword,validState} from './security.js';
 const publicDir=new URL('../public/',import.meta.url);
-const assets={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/progress-validator.cjs':'progress-validator.cjs','/english.js':'english.js','/privacidade':'privacy.html','/termos':'terms.html','/cookies':'cookies.html'};
+const assets={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/courses.js':'courses.js','/learning.js':'learning.js','/progress-validator.cjs':'progress-validator.cjs','/english.js':'english.js','/privacidade':'privacy.html','/termos':'terms.html','/cookies':'cookies.html'};
 const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',cjs:'text/javascript; charset=utf-8'};
 const publicUser=u=>({id:u.id,email:u.email,name:u.name,preferred_language:u.preferred_language});
 export function createApp(repo,{siteURL='http://localhost:3000',production=false}={}){
@@ -16,7 +16,7 @@ export function createApp(repo,{siteURL='http://localhost:3000',production=false
  async function session(req){const raw=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(cookieName+'='))?.slice(cookieName.length+1);if(!/^[a-f0-9]{64}$/.test(raw||''))return {};const hash=tokenHash(raw),user=await repo.getSession(hash);return {hash,user}}
  async function issue(res,user){const token=newToken();await repo.createSession(tokenHash(token),user.id,new Date(Date.now()+30*864e5));res.setHeader('Set-Cookie',cookie(token,30*86400))}
  return async(req,res)=>{
-  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');res.setHeader('Permissions-Policy','camera=(), microphone=(self), geolocation=()');
   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'");
   if(production)res.setHeader('Strict-Transport-Security','max-age=31536000; includeSubDomains');
   try{

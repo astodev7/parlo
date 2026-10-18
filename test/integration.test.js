@@ -34,7 +34,7 @@ test('PostgreSQL + HTTP: accounts, sessions, isolation, language preference and 
   r=await call('/api/auth/password',{method:'POST',cookie:one,body:{currentPassword:'safe-password-123',password:'new-password-456'}});assert.equal(r.status,200);const renewed=r.cookie.split(';')[0];assert.equal((await call('/api/auth/me',{cookie:secondSession})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:one})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user.email,'one@example.com');
   await call('/api/auth/logout',{method:'POST',cookie:renewed,body:{}});assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user,null);
   for(const asset of ['/.env','/server/repository.js','/db/schema.sql'])assert.equal((await call(asset)).status,404);
-  for(const route of ['/','/english.js','/privacidade','/termos','/cookies','/robots.txt','/sitemap.xml'])assert.equal((await call(route)).status,200,route);
+  for(const route of ['/','/english.js','/courses.js','/learning.js','/progress-validator.cjs','/privacidade','/termos','/cookies','/robots.txt','/sitemap.xml'])assert.equal((await call(route)).status,200,route);
   const home=await call('/');assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
   assert.equal(await repo.hitLimit('a'.repeat(64),1),false);assert.equal(await repo.hitLimit('a'.repeat(64),1),true);
   await db.exec("CREATE ROLE anonymous_user; SET ROLE anonymous_user;");await assert.rejects(db.query('SELECT * FROM parlo_users'));await db.exec('RESET ROLE');

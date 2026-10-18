@@ -1,10 +1,38 @@
-# PARLO 3 — Italiano, inglês e contas
+# PARLO 4 — Conversas, situações reais e revisão por assunto
 
 Projeto com frontend em HTML/CSS/JavaScript e backend Node.js + PostgreSQL. O visual mantém a referência verde escura, com títulos serifados e ações coral.
 
-## Novidades
+## Atualizar a versão já publicada
 
-- Italiano e inglês: seis unidades, 18 lições e 108 entradas de vocabulário **em cada idioma**. As trilhas são introdutórias, sem certificação de nível.
+Esta atualização preserva os IDs das 18 lições anteriores de cada idioma e usa o mesmo banco, as mesmas contas e as mesmas variáveis de ambiente. **Não precisa recriar o banco nem repetir a migração para atualizar da v3.** Os novos dados pedagógicos ficam no JSON de progresso existente.
+
+1. Faça uma cópia de segurança do projeto atual.
+2. Copie os arquivos desta versão por cima dos arquivos do seu repositório, preservando seu `.env` e a pasta `.git`. Não copie uma pasta PARLO dentro de outra.
+3. Não envie `.env` ou `node_modules`. Execute `npm install` se for testar localmente.
+4. Faça commit e push para disparar o deploy na Vercel. Mantenha `DATABASE_URL` e `SITE_URL` já configurados.
+5. Após o deploy, entre na conta existente e confira o progresso. A nova seção Conversas está disponível no dashboard e na trilha.
+
+Se você não usa mais a pasta com o repositório, extraia esta versão e copie o `.env` da versão anterior somente para uso local. O ZIP não contém suas credenciais.
+
+## Aprendizado nesta versão
+
+- 24 situações distintas por idioma: seis conversas de fundamentos e 18 situações novas. As conversas iniciais são retomadas nas três lições da respectiva unidade.
+- As seis novas unidades trabalham cidade/transporte, compras/serviços, rotina/trabalho/estudo, pessoas/planos, imprevistos/hospedagem e primeiras experiências no passado e planos.
+- Cada lição combina seis exercícios de palavras/frases com continuação de diálogo e compreensão de uma conversa. Quando há itens anteriores estudados, inclui ainda uma revisão de outro assunto.
+- A introdução apresenta objetivo, explicação, expressões e diálogo com tradução. O aluno lê e ouve antes de iniciar os exercícios.
+- O feedback explica o conteúdo e dá orientações específicas para alguns padrões de erro. É um sistema editorial e de regras, sem inteligência artificial generativa. Não pretende diagnosticar qualquer texto livre possível.
+- Respostas alternativas são listas revisadas e transformações controladas (por exemplo, contrações em inglês e sujeito explícito/omitido em italiano). Não há aceitação indiscriminada por similaridade.
+- Acertos e erros alimentam indicadores por assunto e revisão direcionada. Os indicadores descrevem atividades, não proficiência certificada. A revisão espaçada de palavras continua disponível.
+- Áudio da conversa inteira, reprodução mais lenta, opção de parar e transcrição. Sem voz compatível, a leitura permite concluir normalmente. Não há gravações profissionais incluídas.
+- Prática de fala opcional com SpeechRecognition quando disponível, com feedback de transcrição, sem nota de pronúncia e sem perda de XP. O microfone só é solicitado ao tocar no botão. Bloqueio de permissão, ausência de API, falta de HTTPS e erros de rede têm mensagens e alternativa sem microfone.
+
+O reconhecimento pode depender de um serviço do fornecedor do navegador e transmitir áudio a esse serviço. O servidor do PARLO não recebe ou armazena gravações; a transcrição da prática oral não é incluída no progresso. O teste automatizado de reconhecimento usa simulações para ausência/negação de permissão, não avalia precisão real de sotaques ou voz humana.
+
+A recuperação de senha permanece fora desta atualização, conforme solicitado. A função existente de trocar a senha atual continua disponível.
+
+## Recursos da plataforma
+
+- Italiano e inglês: 12 unidades, 36 lições e 216 entradas de vocabulário **em cada idioma**. As trilhas são introdutórias, sem certificação de nível.
 - Idioma escolhido no cadastro e alterável no dashboard, em desktop e celular.
 - Login com e-mail e senha, acesso imediato e **sem confirmação de e-mail**.
 - Progresso, revisões, favoritos, preferências e sessão de estudo salvos por usuário e idioma.
@@ -26,7 +54,7 @@ Utilize Node.js **22.9 ou superior** e um PostgreSQL acessível (local, Neon ou 
 6. Execute `npm run db:migrate` para criar as tabelas.
 7. Execute `npm start` e acesse **http://localhost:3000**.
 
-O frontend continua separado em `public/index.html`, `public/styles.css` e `public/app.js`. O conteúdo de inglês fica em `public/english.js`; `public/progress-validator.cjs` é JavaScript compartilhado entre navegador e servidor para validar o progresso.
+O frontend continua separado em `public/index.html`, `public/styles.css` e `public/app.js`. O conteúdo inicial de inglês fica em `public/english.js`; os cenários novos e diálogos ficam em `public/courses.js`, e as explicações/alternativas em `public/learning.js`; `public/progress-validator.cjs` é JavaScript compartilhado entre navegador e servidor para validar o progresso.
 
 **Com login, não basta abrir o HTML com duplo clique.** A aplicação precisa do backend para autenticar e sincronizar. A opção de visitante funciona quando o frontend está servido por HTTP, inclusive para estudar sem conta.
 
@@ -62,7 +90,7 @@ A implementação para Vercel está preparada no código, mas este pacote não f
 - Consultas SQL parametrizadas e controle atômico de revisão para evitar sobrescrita silenciosa entre dispositivos.
 - Limites de autenticação por e-mail e endereço de conexão persistidos no PostgreSQL, inclusive entre instâncias. Limite geral adicional em memória. A aplicação não confia em cabeçalhos arbitrários X-Forwarded-For; em proxies compartilhados o limite por conexão pode ser compartilhado entre visitantes.
 - Campo antispam no cadastro, limite de tamanho do JSON e mensagens de login sem detalhar qual credencial falhou.
-- Headers CSP, anti-iframe, nosniff, Referrer-Policy, Permissions-Policy e HSTS no servidor de produção. Na Vercel os headers estáticos estão configurados e a plataforma oferece HTTPS.
+- Headers CSP, anti-iframe, nosniff, Referrer-Policy, Permissions-Policy (microfone somente na própria origem) e HSTS no servidor de produção. Na Vercel os headers estáticos estão configurados e a plataforma oferece HTTPS.
 - Dados de texto renderizados com escape; backup validado antes da importação e progresso validado novamente na API. O CSP permite handlers inline devido à estrutura existente do frontend; não é uma política restrita por nonce.
 - RLS habilitado e acesso PUBLIC revogado nas tabelas. O cliente acessa somente a API da aplicação; o proprietário/servidor acessa o banco.
 - `.env` fora da pasta pública, sem segredos nos arquivos do frontend. O servidor expõe apenas arquivos estáticos permitidos.
@@ -79,7 +107,7 @@ Para migrar o progresso anterior, use o mesmo endereço do site e o mesmo navega
 
 ## Verificação
 
-Execute `npm test`. Os testes usam PostgreSQL em WebAssembly (PGlite) e HTTP real, sem seu banco externo. Eles verificam cadastro sem confirmação, hashes, cookies, login, bloqueio de origem indevida, isolamento de usuários e idiomas, revisão concorrente, validação, alteração de idioma, mudança de senha, revogação de sessão, acesso às páginas públicas, arquivos privados inacessíveis e permissões das tabelas.
+Execute `npm test`. Há também um teste que gera, valida e conclui todas as 72 lições dos dois idiomas, verifica respostas alternativas, acentos, pontuação, controle de recompensa duplicada e revisão por assunto. Os testes usam PostgreSQL em WebAssembly (PGlite) e HTTP real, sem seu banco externo. Eles verificam cadastro sem confirmação, hashes, cookies, login, bloqueio de origem indevida, isolamento de usuários e idiomas, revisão concorrente, validação, alteração de idioma, mudança de senha, revogação de sessão, acesso às páginas públicas, arquivos privados inacessíveis e permissões das tabelas.
 
 Também foram exercitados no Chromium: cadastro escolhendo inglês, lição completa, salvamento no banco, recarga, troca entre idiomas, vocabulário, favoritos, cartões e navegação em desktop e celular, recuperação em um segundo navegador, resolução de conflito e isolamento de contas na interface. O navegador de teste usa um banco isolado, sem enviar e-mails ou dados a um banco de produção.
 
@@ -92,3 +120,5 @@ Também foram exercitados no Chromium: cadastro escolhendo inglês, lição comp
 - As vozes dependem do navegador. Sem voz compatível, as atividades usam texto.
 
 Referências técnicas: https://nodejs.org/api/crypto.html e https://www.postgresql.org/docs/current/sql-insert.html.
+
+Referência de áudio e fala: https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API e https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition.

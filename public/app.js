@@ -28,10 +28,11 @@ const ITALIAN_COURSE=[
 `Verbos#Verbos em -are: eu termina em -o (parlare → parlo). Falso cognato: "abito" = moro, não "hábito".#Parlo italiano|Falo italiano;Mangio la pizza|Como pizza;Bevo un caffè|Bebo um café;Lavoro a Recife|Trabalho em Recife;Abito qui|Moro aqui;Studio ogni giorno|Estudo todo dia`]]
 ].map((u,ui)=>({t:u[0],d:u[1],l:u[2].map((s,li)=>{const[t,n,w]=s.split('#');return{t,n,k:ui+'-'+li,w:w.split(';').map((x,i)=>{const[it,pt]=x.split('|');return{k:ui+'-'+li+'-'+i,it,pt,c:u[0]}})}})}));
 let course='it',account=null,guest=false,authReady=false,authBusy=false,authMode='login',authError='',syncState='local',syncBusy=false,conflict=null;
-let U=ITALIAN_COURSE,V=U.flatMap(u=>u.l.flatMap(l=>l.w)),VK=Object.fromEntries(V.map(x=>[x.k,x]));
+const COURSES={it:enrichFoundation(ITALIAN_COURSE,'it').concat(buildExpansion('it')),en:enrichFoundation(ENGLISH_COURSE,'en').concat(buildExpansion('en'))};
+let U=COURSES.it,V=U.flatMap(u=>u.l.flatMap(l=>l.w)),VK=Object.fromEntries(V.map(x=>[x.k,x]));
 const LANGUAGE={it:{name:'Italiano',target:'italiano',voice:'it-IT',greet:['Buongiorno','Buon pomeriggio','Buonasera'],hello:'Ciao.',bye:'A PRESTO',motto:'Il tuo italiano.'},en:{name:'Inglês',target:'inglês',voice:'en-US',greet:['Good morning','Good afternoon','Good evening'],hello:'Hello.',bye:'SEE YOU SOON',motto:'Your English journey.'}};
 const language=()=>LANGUAGE[course];
-function setCourse(c){course=c;U=c==='en'?ENGLISH_COURSE:ITALIAN_COURSE;V=U.flatMap(u=>u.l.flatMap(l=>l.w));VK=Object.fromEntries(V.map(x=>[x.k,x]));}
+function setCourse(c){course=c;U=COURSES[c];V=U.flatMap(u=>u.l.flatMap(l=>l.w));VK=Object.fromEntries(V.map(x=>[x.k,x]));}
 // ---- ESTADO + PERSISTÊNCIA (IndexedDB) ----
 const DEF=()=>({v:1,p:{name:'',lvl:0,goal:'viagens',min:10,theme:'dark',snd:1,rm:0,on:0},xp:0,days:{},done:{},srs:{},fav:{},acc:{},sess:null,last:null});
 let S=DEF();
@@ -60,7 +61,7 @@ const due=()=>Object.keys(S.srs).filter(k=>S.srs[k].due<=Date.now());
 const hasV=()=>'speechSynthesis' in window&&speechSynthesis.getVoices().some(v=>v.lang.toLowerCase().startsWith(language().voice.slice(0,2)));
 const aud=()=>S.p.snd&&hasV();
 function say(t,slow){if(!aud())return;const u=new SpeechSynthesisUtterance(t);u.lang=language().voice;u.voice=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith(language().voice.slice(0,2)));u.rate=slow?.55:.95;speechSynthesis.cancel();speechSynthesis.speak(u)}
-if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{if(document.activeElement?.tagName!=='INPUT')render()};
+if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{if(document.activeElement?.tagName!=='INPUT'&&!recognition)render()};
 // ---- UTIL ----
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
@@ -87,12 +88,12 @@ function startRev(){const ks=due().slice(0,10);if(!ks.length)return;
  S.sess={lk:'rev',ex:ks.map((k,i)=>mkEx(VK[k],i%2?'type':'choice')),i:0,ok:0,intro:1,sec:0,t:Date.now()};save();location.hash='#/lic'}
 let st={};
 function finish(){const s=S.sess,sec=s.sec,xp=s.ok*10,d=td();
- if(s.pl){let su=U.findIndex((_,i)=>((s.pu&&s.pu[i])||0)<2);if(su<0)su=5;S.last={pl:1,ok:s.ok,n:s.ex.length,su};S.sess=null;save();location.hash='#/fim';return}
+ if(s.pl){let su=U.findIndex((_,i)=>((s.pu&&s.pu[i])||0)<2);if(su<0)su=U.length-1;S.last={pl:1,ok:s.ok,n:s.ex.length,su};S.sess=null;save();location.hash='#/fim';return}
  const e=S.days[d]||{xp:0,s:0};e.xp+=xp;e.s+=sec;S.days[d]=e;S.xp+=xp;
  if(s.lk!=='rev')S.done[s.lk]=(S.done[s.lk]||0)+1;
  S.last={lk:s.lk,ok:s.ok,n:s.ex.length,xp,sec};S.sess=null;save();location.hash='#/fim'}
 function check(){if(st.res)return;const s=S.sess,e=s.ex[s.i];let a=e.t==='order'?st.pick.join(' '):e.t==='type'?document.getElementById('ti').value:st.sel,g=e.t==='match'?{ok:st.m.x?0:1}:grade(a,e.a);
- st.res=g;s.feedback=JSON.parse(JSON.stringify(st));if(g.ok)s.ok++;if(s.pl){const u=e.k[0];s.pu=s.pu||{};s.pu[u]=(s.pu[u]||0)+g.ok}else upd(e.k,g.ok);const A=S.acc[e.t]||[0,0];A[0]+=g.ok;A[1]++;S.acc[e.t]=A;save();render()}
+ st.res=g;s.feedback=JSON.parse(JSON.stringify(st));if(g.ok)s.ok++;if(s.pl){const u=e.k.split('-')[0];s.pu=s.pu||{};s.pu[u]=(s.pu[u]||0)+g.ok}else upd(e.k,g.ok);const A=S.acc[e.t]||[0,0];A[0]+=g.ok;A[1]++;S.acc[e.t]=A;save();render()}
 function next(){const s=S.sess;if(!st.res)return;s.i++;delete s.feedback;st={};if(s.i>=s.ex.length)finish();else{save();render()}}
 function lessonView(){const s=S.sess;if(!s){location.hash='#/';return''}
  if(!s.intro){const l=U.flatMap(u=>u.l).find(l=>l.k===s.lk);
@@ -225,4 +226,76 @@ addEventListener('hashchange',()=>{st=S.sess?.feedback||{};render();scrollTo(0,0
 addEventListener('online',()=>{render();syncProgress()});addEventListener('offline',()=>{syncState=account?'offline':'local';render()});
 
 setInterval(()=>{if(account&&!document.hidden&&!syncBusy&&!conflict&&records[stateKey(owner(),course)]?.dirty)syncProgress()},15000);
+// ---- Applied learning: authored dialogues, equivalence lists, topic review and opt-in speech ----
+function lessonForKey(key){return U.flatMap(u=>u.l).find(l=>l.k===key.split('-').slice(0,2).join('-'))}
+function learningStats(){return S.learning||(S.learning={topics:{},mistakes:[]})}
+const originalMkEx=mkEx;
+mkEx=function(x,kind){const ex=originalMkEx(x,kind);ex.topic=x.topic;ex.why=x.tip;ex.alt=['type','order','listen'].includes(ex.t)?x.alt||[]:[];ex.context=lessonForKey(x.k)?.goal||'';return ex};
+function dialogueExercise(l){const d=l.dialogue,reply=d[2];return {t:'dialogue',k:(l.w.find(x=>norm(x.it)===norm(reply.text))||l.w[0]).k,topic:l.topic,q:`Você é ${reply.speaker.toLowerCase()}. Qual fala continua a conversa?`,a:reply.text,o:shuf([reply.text,d[0].text,d[1].text,d[3].text].filter((x,i,a)=>a.indexOf(x)===i)),ctx:d.slice(0,2),context:l.goal,why:`O objetivo aqui é: ${l.goal} A fala “${reply.text}” continua a conversa. Compare com a resposta seguinte: “${d[3].text}” (${d[3].pt}).`,alt:equivalents(reply.text,course)};}
+function comprehensionExercise(l){return {t:'context',k:l.w[0].k,topic:l.topic,q:l.task.q,a:l.task.a,o:shuf([l.task.a,...l.task.o]),ctx:l.dialogue,context:l.goal,why:l.task.why,alt:[]}}
+function lessonExercises(l){const out=[mkEx(l.w[0],'choice'),mkEx(l.w[1],'order'),mkEx(l.w[2],'type'),dialogueExercise(l),mkEx(l.w[3],'listen'),comprehensionExercise(l),mkEx(l.w[4],'cloze'),mkEx(l.w[5],'match')];const prior=V.filter(x=>S.srs[x.k]&&!l.w.some(y=>y.k===x.k)).sort((a,b)=>S.srs[a.k].b-S.srs[b.k].b);if(prior.length){const ex=mkEx(prior[0],'type');ex.mixed=true;out.push(ex)}return out}
+startLesson=function(k){if(transitionBusy){notice('Aguarde a troca de idioma terminar.');return}stopSpeech();if(S.sess?.lk===k){location.hash='#/lic';render();return}const l=U.flatMap(u=>u.l).find(l=>l.k===k);if(!l){notice('Lição não encontrada.');return}S.sess={lk:k,ex:lessonExercises(l),i:0,ok:0,intro:0,sec:0,t:Date.now()};st={};save();location.hash='#/lic';render()};
+const originalGrade=grade;
+grade=function(answer,expected,alternatives=[]){const valid=[expected,...alternatives].map(norm);if(valid.includes(norm(String(answer||''))))return {ok:1,equivalent:norm(String(answer||''))!==norm(expected)};return originalGrade(String(answer||''),expected)};
+function explainAnswer(e,answer,result){
+ if(result.ok)return result.equivalent?'Sua formulação também é natural e tem o mesmo sentido nesta atividade. '+(e.why||''):e.why||VK[e.k]?.tip||'Confira a expressão completa e seu uso no contexto.';
+ if(e.t==='dialogue')return 'Essa fala não dá continuidade ao papel indicado neste ponto da conversa. '+e.why;
+ if(e.t==='context')return e.why;
+ const a=norm(String(answer||'')),expected=norm(e.a);let detail='';
+ if(course==='en'){
+  if(/\bi (am|have) (hungry|thirsty|sleepy|cold|tired)\b/.test(a)&&/\bi have\b/.test(a))detail='Em inglês, diga I am hungry/thirsty/tired, usando to be para esse estado. ';
+  else if(/\b(he|she|it) have\b/.test(a))detail='Com he, she ou it, have vira has no presente afirmativo. ';
+  else if(/\bdid(n't| not)? (went|saw|bought|understood)\b/.test(a))detail='Depois de did/didn’t, o verbo precisa voltar à forma base: go, see, buy, understand. ';
+  else if(/\bi am (study|work|live|speak)\b/.test(a))detail='Para esse hábito, use I study/work/live/speak, sem am antes do verbo base. ';
+  else if(/\b(not|n't|cannot)\b/.test(expected)&&!/(not|n't|cannot)/.test(a))detail='Faltou a negação, o que muda o sentido da resposta. ';
+ }else{
+  if(/\bsono (fame|sete|sonno)\b/.test(a))detail='Esses estados usam avere: ho fame, ho sete, ho sonno. ';
+  else if(/\bio (è|ha|sei)\b/.test(a))detail='Com io, use sono para essere e ho para avere. ';
+  else if(expected.startsWith('non ')&&!a.startsWith('non '))detail='Faltou non antes do verbo: a frase pedida é negativa. ';
+ }
+ return (result.m?result.m+' ':'')+detail+(e.why||VK[e.k]?.tip||'Confira a pessoa do verbo, a ordem e as palavras da expressão apresentada.');
+}
+function recordAttempt(e,ok,answer){const data=learningStats(),topic=e.topic||VK[e.k]?.topic||'present',t=data.topics[topic]||{attempts:0,correct:0,misses:0,streak:0,last:0};t.attempts++;t.correct+=ok?1:0;t.misses+=ok?0:1;t.streak=ok?t.streak+1:0;t.last=Date.now();data.topics[topic]=t;if(!ok){data.mistakes.unshift({key:e.k,type:e.t,answer:String(answer||'Associação incorreta').slice(0,200),expected:e.a.slice(0,300),topic,at:Date.now()});data.mistakes=data.mistakes.slice(0,40)}}
+check=function(){const s=S.sess;if(!s||st.res)return;const e=s.ex[s.i];let answer=e.t==='order'?(st.pick||[]).join(' '):e.t==='type'?document.getElementById('ti').value:st.sel;const result=e.t==='match'?{ok:st.m?.x?0:1}:grade(answer,e.a,e.alt||[]);st.answer=String(answer||'');st.res={...result,explanation:explainAnswer(e,answer,result)};if(result.ok)s.ok++;
+ if(s.pl){const u=e.k.split('-')[0];s.pu=s.pu||{};s.pu[u]=(s.pu[u]||0)+result.ok}
+ else {if(e.t==='match'){e.ps.forEach(p=>{const x=VK[p.k]||V.find(x=>x.c===VK[e.k].c&&x.it===p.it&&x.pt===p.pt);if(x)upd(x.k,!(st.m.bad||[]).includes(p.pt))})}else upd(e.k,result.ok);recordAttempt(e,result.ok,answer)}
+ const stats=S.acc[e.t]||[0,0];stats[0]+=result.ok;stats[1]++;S.acc[e.t]=stats;s.feedback=structuredClone(st);save();render();
+};
+mt=function(side,value){const m=st.m;if(!m||st.res||m.d.includes(value))return;if(!side)m.l=value;else if(m.l!==null){if(value===m.l)m.d.push(value);else{m.x++;m.bad=m.bad||[];m.bad.push(m.l)}m.l=null}render()};
+function dialogueMarkup(lines,{translations=false,reveal=false}={}){return `<div class="dialogue-lines">${lines.map((line,i)=>`<div class="dialogue-line ${i%2?'right':''}"><span>${esc(line.speaker)}</span><p lang="${language().voice}">${esc(line.text)}</p>${translations?`<small>${esc(line.pt)}</small>`:''}</div>`).join('')}</div>`}
+let dialoguePlayer=0;
+function stopAudio(){dialoguePlayer++;if('speechSynthesis'in window)speechSynthesis.cancel()}
+function playDialogue(key,slow=false){const l=lessonForKey(key);if(!l||!aud()){notice('Não há voz compatível disponível. Você pode ler a transcrição.');return}stopAudio();const run=dialoguePlayer;let i=0;function speakNext(){if(run!==dialoguePlayer||i>=l.dialogue.length)return;const line=l.dialogue[i++],u=new SpeechSynthesisUtterance(line.text);u.lang=language().voice;u.voice=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith(language().voice.slice(0,2)));u.rate=slow?.65:.92;u.onend=speakNext;u.onerror=()=>{if(run===dialoguePlayer)notice('Não foi possível reproduzir a conversa. Use a transcrição.')};speechSynthesis.speak(u)}speakNext()}
+function dialogueAudio(l){return `<div class="dialogue-audio"><button class="btn s" ${aud()?'':'disabled'} onclick="playDialogue('${l.k}')">${icon('sound')} Ouvir conversa</button><button class="btn s" ${aud()?'':'disabled'} onclick="playDialogue('${l.k}',true)">Mais devagar</button><button class="text-btn" onclick="stopAudio()">Parar</button></div>`}
+function speakingPanel(l){const x=l.w.find(x=>x.it.split(' ').length>2)||l.w[0];return `<section class="speaking-panel"><div class="row"><p class="eyebrow">SUA VEZ DE FALAR · OPCIONAL</p>${badge('Sem perder pontos')}</div><h3 lang="${language().voice}">${esc(x.it)}</h3><p class="mu">${esc(x.pt)}</p><div class="speech-actions">${audioButton(x)}<button class="btn s" onclick="startSpeaking('${x.k}')">Praticar com microfone</button><button class="text-btn" onclick="stopSpeech(true)">Encerrar</button></div><p class="tiny">O reconhecimento pode usar um serviço do navegador e precisar de internet. A transcrição ajuda a praticar; ela não mede sua pronúncia. Nenhum áudio é enviado ao servidor do PARLO.</p><p id="speech-result" class="speech-result" aria-live="polite">Você também pode ouvir, repetir em voz alta e comparar por conta própria.</p></section>`}
+let recognition=null,speechRun=0;
+function stopSpeech(show=false){speechRun++;if(recognition){recognition.onend=null;recognition.onresult=null;recognition.onerror=null;try{recognition.abort()}catch{}recognition=null}if(show){const n=document.getElementById('speech-result');if(n)n.textContent='Prática encerrada. Você pode tentar novamente quando quiser.'}}
+function startSpeaking(key){const x=VK[key],node=document.getElementById('speech-result'),API=window.SpeechRecognition||window.webkitSpeechRecognition;if(!x||!node)return;if(!API){node.textContent='O reconhecimento de fala não está disponível neste navegador. Ouça o exemplo e pratique sem microfone.';return}if(!window.isSecureContext){node.textContent='O microfone precisa de HTTPS ou localhost. Você ainda pode praticar sem ele.';return}stopSpeech();stopAudio();const run=speechRun,languageAtStart=course;recognition=new API();recognition.lang=language().voice;recognition.interimResults=false;recognition.maxAlternatives=1;node.textContent='Ouvindo… diga a frase acima. Você pode encerrar a qualquer momento.';
+ recognition.onresult=event=>{if(run!==speechRun||course!==languageAtStart)return;const heard=event.results[0][0].transcript,match=grade(heard,x.it,x.alt);node.textContent='O navegador entendeu: “'+heard+'”. '+(match.ok?'A transcrição corresponde à frase ou a uma alternativa aceita.':'Compare com: “'+x.it+'”. Tente mais uma vez se quiser. Erros de transcrição também podem acontecer.');};
+ recognition.onerror=event=>{if(run!==speechRun)return;node.textContent=event.error==='not-allowed'?'Acesso ao microfone não autorizado. Continue praticando sem ele ou ajuste a permissão do site.':event.error==='no-speech'?'Não foi detectada fala. Tente novamente quando quiser.':'O reconhecimento não está disponível agora. Continue com o exemplo e a transcrição.'};recognition.onend=()=>{if(run===speechRun&&node.textContent.startsWith('Ouvindo'))node.textContent='A escuta terminou sem uma transcrição. Tente novamente ou pratique sem microfone.'};try{recognition.start()}catch{node.textContent='Não foi possível iniciar o microfone. Tente novamente ou pratique sem ele.'}}
+function startTargeted(topic){const words=V.filter(x=>x.topic===topic&&S.srs[x.k]).sort((a,b)=>S.srs[a.k].b-S.srs[b.k].b||S.srs[a.k].due-S.srs[b.k].due);if(!words.length){notice('Conclua uma lição deste assunto primeiro.');return}stopSpeech();const ex=words.slice(0,6).map((x,i)=>mkEx(x,['type','order','choice','cloze','type','listen'][i%6])),l=lessonForKey(words[0].k);ex.push(dialogueExercise(l),comprehensionExercise(l));S.sess={lk:'rev',ex,i:0,ok:0,intro:1,sec:0,t:Date.now(),practiceTopic:topic};st={};save();location.hash='#/lic';render()}
+function topicInsights(){const topics=Object.entries(S.learning?.topics||{}).sort(([,a],[,b])=>(a.correct/a.attempts)-(b.correct/b.attempts));return `<section class="learning-insights"><div class="row"><div><p class="eyebrow">O QUE PRATICAR AGORA</p><h2>Seu aprendizado, por assunto.</h2></div><a class="btn s" href="#/conversas">Explorar conversas</a></div>${topics.length?`<div class="topic-grid">${topics.map(([key,t])=>{const pct=Math.round(t.correct/t.attempts*100),status=t.attempts<4?'Conhecendo o assunto':pct<70?'Precisa de prática':pct<90?'Em construção':'Acertos consistentes';return `<article class="card topic"><span class="eyebrow">${status}</span><h3>${esc(TOPIC_NAMES[key]||key)}</h3><p><b>${pct}%</b> <span class="mu">· ${t.correct}/${t.attempts} atividades corretas</span></p><div class="bar"><i style="width:${pct}%"></i></div><button class="btn s" onclick="startTargeted('${key}')">Praticar este assunto</button></article>`}).join('')}</div>`:'<div class="card"><p class="mu">Depois das primeiras atividades, você verá aqui os assuntos que precisam de mais prática. Esses indicadores refletem seus exercícios, não uma certificação de nível.</p></div>'}</section>`}
+function conversationLibrary(){const scenes=U.flatMap((u,i)=>i<6?[u.l[0]]:u.l);return heading('CONVERSAS REAIS','Um idioma para viver.','Pratique situações completas: entender o contexto, escolher uma resposta e continuar a conversa.',badge(scenes.length+' situações'))+`<div class="scenario-grid">${scenes.map(l=>`<article class="card scenario"><p class="eyebrow">${esc(TOPIC_NAMES[l.topic])}</p><h2>${esc(l.t)}</h2><p class="mu">${esc(l.goal)}</p><blockquote lang="${language().voice}">“${esc(l.dialogue[0].text)}”</blockquote><button class="btn s" onclick="startLesson('${l.k}')">Praticar situação ${icon('arrow')}</button></article>`).join('')}</div>`}
+const legacyLessonView=lessonView;
+lessonView=function(){const s=S.sess;if(!s)return legacyLessonView();const l=U.flatMap(u=>u.l).find(l=>l.k===s.lk);let html=legacyLessonView();if(!s.intro&&l){return html+`<section class="conversation-study"><div class="row"><div><p class="eyebrow">A LÍNGUA EM CONTEXTO</p><h2>Antes das palavras, uma conversa.</h2></div>${badge('Situação guiada')}</div><p class="mu">${esc(l.goal)}</p>${dialogueAudio(l)}${dialogueMarkup(l.dialogue,{translations:true})}<p class="tiny">Leia os papéis, escute e depois tente responder sem consultar as traduções.</p></section>${speakingPanel(l)}`}
+ const e=s.ex[s.i];return html;
+};
+const previousRender=render;
+render=function(){previousRender();if(!authReady||(!account&&!guest)||!S.p.on)return;const A=document.getElementById('app'),route=(location.hash.slice(2)||'').split('?')[0];
+ if(route==='conversas'){A.innerHTML='<div id="conflict-slot">'+conflictView()+'</div>'+conversationLibrary();return}
+ if(route==='trilha'){A.insertAdjacentHTML('afterbegin','<div class="curriculum-banner"><b>Do básico às situações reais.</b><p>Unidades 1–6: fundamentos · 7–11: uso cotidiano · 12: primeiras experiências no passado e planos. Este percurso é introdutório e não certifica um nível completo.</p><a href="#/conversas">Ver situações do dia a dia →</a></div>')}
+ if(route===''||route==='rev')A.insertAdjacentHTML('beforeend',topicInsights());if(route==='rev'&&S.learning?.mistakes?.length)A.insertAdjacentHTML('beforeend',`<section class="recent-mistakes"><p class="eyebrow">APRENDER COM AS TENTATIVAS</p><h2>Retome um ponto de cada vez.</h2>${S.learning.mistakes.slice(0,4).map(m=>`<article class="card row"><div><b>${esc(TOPIC_NAMES[m.topic])}</b><p class="mu">Uma resposta esperada: ${esc(m.expected)}</p></div><button class="btn s" onclick="startTargeted('${m.topic}')">Praticar</button></article>`).join('')}</section>`);
+ if(route==='rev'&&!due().length&&Object.keys(S.srs).length){const empty=A.querySelector('.empty');empty?.classList.add('compact');const title=empty?.querySelector('h2'),description=empty?.querySelector('p.mu');if(title)title.textContent='Revisão espaçada em dia.';if(description)description.textContent='Suas próximas revisões já estão agendadas. Você pode reforçar os assuntos abaixo enquanto espera.'}
+ if(route==='lic'&&S.sess&&!S.sess.intro){const activityCount=A.querySelector('.lesson-intro>section:first-child>.row .badge:last-child');if(activityCount)activityCount.textContent=S.sess.ex.length+' atividades';A.querySelector('.lesson-intro .btn.w')?.remove();A.insertAdjacentHTML('beforeend',`<button class="btn w lesson-start" onclick="stopAudio();stopSpeech();S.sess.intro=1;S.sess.t=Date.now();save();render()">Começar exercícios ${icon('arrow')}</button>`)}
+ if(route==='lic'&&S.sess?.intro){const e=S.sess.ex[S.sess.i],area=A.querySelector('.exercise'),result=st.res;if(!area)return;area.classList.add('applied-exercise');area.insertAdjacentHTML('afterbegin',`<p class="eyebrow exercise-topic">${e.mixed?'REVISÃO DE OUTRO ASSUNTO':e.t==='dialogue'?'CONTINUE A CONVERSA':e.t==='context'?'ENTENDA A SITUAÇÃO':esc(TOPIC_NAMES[e.topic]||'PRÁTICA')} · ${esc(e.context||'')}</p>`);
+ if(e.ctx){const before=area.querySelector('h2');let block;if(e.t==='context'){const source=lessonForKey(e.k);block=`<section class="exercise-dialogue">${dialogueAudio(source)}<p class="tiny">${aud()?'Ouça a conversa. Se precisar, abra a transcrição para acompanhar.':'Sem voz disponível: leia a conversa para continuar.'}</p>${aud()?`<details><summary>Mostrar transcrição</summary>${dialogueMarkup(e.ctx,{translations:!!result})}</details>`:dialogueMarkup(e.ctx,{translations:!!result})}</section>`}else block=`<section class="exercise-dialogue">${dialogueMarkup(e.ctx,{translations:!!result})}</section>`;before.insertAdjacentHTML('beforebegin',block)}
+ if(result){const fb=area.querySelector('.fb');fb.innerHTML=`<b>${result.ok?'✓ '+(result.equivalent?'Outra forma correta!':'Correto!'):'Vamos entender juntos.'}</b>${!result.ok&&st.answer?`<p>Sua resposta: <span>${esc(st.answer)}</span></p>`:''}<p>Uma resposta esperada: <strong lang="${language().voice}">${esc(e.a)}</strong></p><p class="feedback-why">${esc(result.explanation||explainAnswer(e,st.answer,result))}</p>${e.alt?.length?`<details><summary>Outras formas aceitas</summary><p>${e.alt.map(esc).join(' · ')}</p></details>`:''}<button class="btn s" aria-pressed="${!!S.fav[e.k]}" onclick="tg('${e.k}')">${S.fav[e.k]?'★ Frase salva':'☆ Salvar: '+esc(VK[e.k].it)}</button>`}
+ }
+};
+const previousNext=next;next=function(){stopSpeech();stopAudio();previousNext()};
+addEventListener('hashchange',()=>{stopSpeech();stopAudio()});
+addEventListener('pagehide',()=>{stopSpeech();stopAudio()});document.addEventListener('visibilitychange',()=>{if(document.hidden){stopSpeech();stopAudio()}});
+const previousChangeCourse=changeCourse;
+changeCourse=async function(lang){if(transitionBusy)return;stopSpeech();stopAudio();document.body.classList.add('changing-course');try{return await previousChangeCourse(lang)}finally{document.body.classList.remove('changing-course')}};
+
 boot();
