@@ -1,8 +1,26 @@
-# PARLO 5 — Vocabulário organizado para o dia a dia
+# PARLO 7 — Praticar, lembrar e reforçar
 
 Projeto com frontend em HTML/CSS/JavaScript e backend Node.js + PostgreSQL. O visual mantém a referência verde escura, com títulos serifados e ações coral.
 
-## Vocabulário ampliado nesta versão
+## Aprendizado com mais prática — v7
+
+- Cada etapa nova tem três rodadas com as seis expressões: reconhecimento, prática guiada e recordação escrita. São 20 atividades, mais uma revisão de outro assunto quando disponível.
+- As respostas erradas voltam após outras atividades quando possível, em outro formato. Limite de duas retomadas por expressão e 32 atividades por sessão, para evitar repetição infinita.
+- A tela final oferece “Praticar mais” da mesma etapa e continuar. A prática extra tem 14 atividades de base e prioriza os pontos pendentes, sem contar outra lição concluída.
+- As etapas já concluídas também têm “Praticar mais” na trilha. Sessões em andamento são retomadas sem descartá-las.
+- Repetir a mesma expressão na lição ou na prática extra dentro de 24 horas não aumenta várias vezes o intervalo da revisão espaçada. Os erros continuam antecipando a revisão. XP limitado a 200 por sessão.
+- O avanço é uma escolha ao terminar a prática; não representa domínio permanente do conteúdo.
+- Copie a atualização preservando `.env` e `.git`, faça commit e push. Atualize também `public/progress-validator.cjs` (compartilhado com o servidor). Não há migração SQL ou variável de ambiente nova. Sessões antigas podem ser concluídas normalmente; a nova sequência vale ao iniciar outra etapa ou prática.
+
+## Atualização visual v6
+
+- Seletor de cursos com bandeiras em SVG, menu “Meus cursos”, destaque do idioma atual e troca no desktop e celular.
+- Inglês com a bandeira dos Estados Unidos; voz de pronúncia continua en-US.
+- Filtros visuais combináveis de tópicos, unidades/assuntos, registro e favoritos, com contagem, busca e limpeza.
+- Teclado: Tab e Enter/Espaço para abrir e selecionar cursos; Escape fecha o menu. Clique fora também fecha.
+- Atualize os arquivos do projeto preservando `.env` e `.git`. Rode `npm install` se necessário, faça commit e push. Sem nova migração ou variável de ambiente.
+
+## Vocabulário ampliado
 
 A biblioteca tem **400 entradas por idioma**, sendo 216 ligadas às aulas e 184 novas entradas editoriais. São entradas de estudo (uma mesma palavra pode ter sentidos ou usos diferentes), não um ranking estatístico de frequência.
 
@@ -152,3 +170,7 @@ Referências técnicas: https://nodejs.org/api/crypto.html e https://www.postgre
 Referência de áudio e fala: https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API e https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition.
 
 Validação da v5: integridade e IDs das novas entradas em ambos os idiomas; exemplos e pares formal/informal; filtros e contagens; favoritos e sessões lexicais aceitos pela API; preservação das 72 lições; testes no Chromium de busca, paginação, comparação, prática da seleção, sincronização e layout de celular.
+
+Validação da v6: testes automatizados de filtros combinados e limpeza nos dois idiomas, busca, unidades, favoritos e geração do menu de cursos; suíte de lições e integração PostgreSQL/HTTP. O novo layout não foi validado em navegador nesta execução.
+
+Validação da v7: todas as 72 lições, três exposições de cada expressão, correção e retomada após recarregar, filas de erro limitadas a 32 atividades, prática extra sem avanço, intervalos de revisão e compatibilidade com sessões antigas. Integração PostgreSQL/HTTP cobre salvar e recuperar sessões novas com a fila de reforço. Sem conferência visual em navegador nesta execução.

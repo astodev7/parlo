@@ -16,6 +16,18 @@ function validateProgress(s){
  const topics=['greetings','identity','states','articles','requests','present','directions','shopping','routine','plans','problems','past-plans'];
  if(s.learning!==undefined){const data=s.learning;if(!data||!data.topics||typeof data.topics!=='object'||Array.isArray(data.topics)||!Array.isArray(data.mistakes)||data.mistakes.length>40)return false;if(!Object.entries(data.topics).every(([key,t])=>topics.includes(key)&&t&&['attempts','correct','misses','streak','last'].every(k=>Number.isFinite(t[k])&&t[k]>=0)&&Number.isInteger(t.attempts)&&t.correct+t.misses===t.attempts&&t.streak<=t.correct))return false;if(!data.mistakes.every(m=>m&&/^(?:(?:[0-9]|1[01])-[0-2]-[0-5]|lex-[a-f0-9]{12})$/.test(m.key)&&topics.includes(m.topic)&&['choice','order','type','listen','cloze','match','dialogue','context'].includes(m.type)&&typeof m.answer==='string'&&m.answer.length<=200&&typeof m.expected==='string'&&m.expected.length<=300&&Number.isFinite(m.at)&&m.at>=0))return false}
  if(s.sess){if(s.sess.practiceTopic!==undefined&&!topics.includes(s.sess.practiceTopic))return false;for(const e of s.sess.ex){if(e.topic!==undefined&&!topics.includes(e.topic))return false;if(e.alt!==undefined&&(!Array.isArray(e.alt)||e.alt.length>15||!e.alt.every(x=>typeof x==='string'&&x.length<1000)))return false;if(e.ctx!==undefined&&(!Array.isArray(e.ctx)||e.ctx.length>10||!e.ctx.every(x=>x&&['speaker','text','pt'].every(k=>typeof x[k]==='string'&&x[k].length<1000))))return false}}
+ const lessonKey=k=>typeof k==='string'&&/^(?:[0-9]|1[01])-[0-2]$/.test(k);
+ const wordKey=k=>typeof k==='string'&&/^(?:(?:[0-9]|1[01])-[0-2]-[0-5]|lex-[a-f0-9]{12})$/.test(k);
+ const keyList=x=>Array.isArray(x)&&x.length<=32&&new Set(x).size===x.length&&x.every(wordKey);
+ for(const x of [s.sess,s.last])if(x&&(x.lessonMode!==undefined||x.lessonKey!==undefined)){
+  if(!['learn','extra'].includes(x.lessonMode)||!lessonKey(x.lessonKey)||!keyList(x.missedKeys))return false;
+  if(x.lessonMode==='learn'&&x.lk!==x.lessonKey||x.lessonMode==='extra'&&x.lk!=='rev')return false;
+ }
+ if(!Object.values(s.srs).every(v=>v.reviewedAt===undefined||Number.isFinite(v.reviewedAt)&&v.reviewedAt>=0))return false;
+ if(s.sess){
+  if(s.sess.srsSeen!==undefined&&!keyList(s.sess.srsSeen))return false;
+  if(!s.sess.ex.every(e=>e.stage===undefined||['discover','practice','recall','use','retry'].includes(e.stage)))return false;
+ }
  return true;
 }
 

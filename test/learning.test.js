@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFile} from 'node:fs/promises';
-function context(){const input={value:'',classList:{toggle(){}},style:{},dataset:{}};const c={console,Date,Math,JSON,structuredClone,URL,Blob,setInterval(){},setTimeout(){},clearTimeout(){},addEventListener(){},scrollTo(){},location:{hash:'#/'},navigator:{onLine:true},window:{},document:{getElementById:()=>input,addEventListener(){},documentElement:{dataset:{}},visibilityState:'visible'},indexedDB:{open(){throw Error('not available in unit test')}},matchMedia:()=>({matches:true})};return vm.createContext(c)}
+function context(){const input={value:'',classList:{toggle(){},add(){},remove(){}},style:{},dataset:{}};const c={console,Date,Math,JSON,structuredClone,URL,Blob,setInterval(){},setTimeout(){},clearTimeout(){},addEventListener(){},scrollTo(){},location:{hash:'#/'},navigator:{onLine:true},window:{},document:{getElementById:()=>input,addEventListener(){},documentElement:{dataset:{}},visibilityState:'visible'},indexedDB:{open(){throw Error('not available in unit test')}},matchMedia:()=>({matches:true})};return vm.createContext(c)}
 test('All bilingual lessons generate valid, completable sessions and preserve old keys',async()=>{const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}vm.runInContext(`
 render=()=>{};
 for(const lang of ['it','en']){
@@ -21,3 +21,73 @@ for(const lang of ['en','it']){setCourse(lang);S=DEF();S.p.on=1;resetLexFilters(
 setCourse('it');if(!grade('Io sono stanco','Sono stanco',equivalents('Sono stanco','it')).ok)throw Error('Subject omission');if(grade('e','è',[]).ok)throw Error('Accent difference');
 S=DEF();S.p.on=1;startLesson('6-0');S.sess.intro=1;st={sel:'resposta incorreta'};check();if(S.learning.topics.directions.misses!==1)throw Error('Topic tracking');if(!validateProgress(S))throw Error('Error state');S.sess=null;startTargeted('directions');if(S.sess.practiceTopic!=='directions'||!S.sess.ex.some(e=>e.t==='context'))throw Error('Targeted review');
 `,c);assert.ok(true)});
+test('Visual course picker and combined vocabulary filters work in both languages',async()=>{
+ const c=context();
+ for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){
+  let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');
+  if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');
+  vm.runInContext(src,c,{filename:name});
+ }
+ vm.runInContext(`
+ render=()=>{};
+ for(const lang of ['it','en']){
+  setCourse(lang);S=DEF();S.p.on=1;
+  const picker=coursePicker();
+  if(!picker.includes('MEUS CURSOS')||!picker.includes("selectCourse('en')")||!picker.includes('selected'))throw Error('Course menu');
+  if(!courseFlag('en').includes('#304776')||!courseFlag('en').includes('#d74a53'))throw Error('US flag');
+  chooseLexTopic('course');
+  if(!lexFiltersOpen||lexActiveCount()!==1)throw Error('Topic selection');
+  lexPickSub(0);
+  if(lexMatches(lexItems()).length!==18||lexActiveCount()!==2)throw Error('Unit filter');
+  const first=lexMatches(lexItems())[0];S.fav[first.k]=true;
+  lexFilter('saved',true);
+  if(lexMatches(lexItems()).length!==1)throw Error('Combined favorites');
+  lexFilter('register','formal');
+  if(lexMatches(lexItems()).length!==0)throw Error('Combined empty state');
+  lexReset();
+  if(lexMatches(lexItems()).length!==400||lexActiveCount()!==0)throw Error('Clear filters');
+  chooseLexTopic('formal');lexFilter('register','formal');
+  if(lexMatches(lexItems()).length!==12)throw Error('Formal filter');
+  lexQuery=VOCABULARY[lang].find(x=>x.category==='formal').it;
+  if(!lexMatches(lexItems()).length)throw Error('Search plus filters');
+  const html=vocab();
+  if(html.includes('<select')||!html.includes('filter-topic-grid')||!html.includes('filter-status'))throw Error('Visual filter HTML');
+ }
+ `,c);
+});
+test('Lesson repetition, bounded error retries, optional practice and review intervals survive resume',async()=>{
+ const c=context();
+ for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){
+  let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name});
+ }
+ vm.runInContext(`
+ render=()=>{};
+ function answerExercise(right=true){const e=S.sess.ex[S.sess.i];st={};if(e.t==='type')document.getElementById('ti').value=right?e.a:'resposta errada';else if(e.t==='order')st.pick=right?e.a.split(' '):['errado'];else st.sel=right?e.a:'resposta errada';check()}
+ for(const lang of ['it','en']){
+  setCourse(lang);S=DEF();S.p.on=1;startLesson('0-0');S.sess.intro=1;
+  if(S.sess.ex.length!==20||S.sess.lessonMode!=='learn')throw Error('Expanded initial lesson');
+  for(const word of U[0].l[0].w){if(S.sess.ex.filter(e=>e.k===word.k&&['discover','practice','recall'].includes(e.stage)).length!==3)throw Error('Every word repeated');if(!S.sess.ex.some(e=>e.k===word.k&&e.stage==='recall'&&e.t==='type'))throw Error('Recall missing')}
+  const firstKey=S.sess.ex[0].k;answerExercise(false);
+  if(S.sess.ex.length!==21||S.sess.ex[1].stage==='retry')throw Error('Delayed retry');
+  const size=S.sess.ex.length;check();if(S.sess.ex.length!==size)throw Error('Double enqueue');
+  S=JSON.parse(JSON.stringify(S));st=structuredClone(S.sess.feedback);if(!validateProgress(S))throw Error('Resume state');check();if(S.sess.ex.length!==size)throw Error('Reload duplicated retry');next();
+  while(S.sess){answerExercise(true);if(!validateProgress(S))throw Error('Invalid graded lesson');next()}
+  if(S.done['0-0']!==1||S.done['0-1'])throw Error('Unexpected advancement');
+  if(S.last.xp>200||!validateProgress(S))throw Error('Result validation');
+  if(S.srs[firstKey].b!==0||S.srs[firstKey].due>Date.now()+11*60000)throw Error('Error review delayed too far');
+  const anotherKey=U[0].l[0].w[1].k;if(S.srs[anotherKey].b!==1||S.srs[anotherKey].due>Date.now()+DAY+1000)throw Error('Repetition falsely spaced');
+  if(!fim().includes('Praticar mais:')||!fim().includes('Continuar:'))throw Error('Result actions missing');
+  const before=S.srs[anotherKey].b;practiceMore('0-0');if(S.sess.lk!=='rev'||S.sess.lessonKey!=='0-0'||S.sess.ex.length!==14)throw Error('Extra practice scope');
+  const ongoing=JSON.stringify(S.sess);practiceMore('0-1');if(JSON.stringify(S.sess)!==ongoing)throw Error('Active session overwritten');
+  while(S.sess){answerExercise(true);if(!validateProgress(S))throw Error('Invalid practice');next()}
+  if(S.done['0-0']!==1||S.done['0-1'])throw Error('Extra practice advanced course');
+  if(S.srs[anotherKey].b!==before)throw Error('Same-day extra practice falsely spaced');
+  S=DEF();S.p.on=1;startLesson('0-0');S.sess.intro=1;let attempts=0;
+  while(S.sess){answerExercise(false);attempts++;if(S.sess.ex.length>32||!validateProgress(S))throw Error('Unbounded or invalid retries');next();if(attempts>32)throw Error('Infinite lesson')}
+  if(attempts!==32||S.last.missedKeys.length<6||!fim().includes('Vamos fixar'))throw Error('Wrong-answer reinforcement');
+  const invalid=structuredClone(S);invalid.last.lessonKey='99-9';if(validateProgress(invalid))throw Error('Invalid source accepted');
+  // A saved v6 session still finishes with its original sequence.
+  S=DEF();S.p.on=1;S.sess={lk:'0-0',ex:[mkEx(U[0].l[0].w[0],'choice')],i:0,ok:0,intro:1,sec:0,t:Date.now()};answerExercise(true);next();if(!S.done['0-0']||!validateProgress(S)||!fim().includes('Praticar mais:'))throw Error('Legacy compatibility');
+ }
+ `,c);
+});

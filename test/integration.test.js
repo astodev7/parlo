@@ -26,7 +26,12 @@ test('PostgreSQL + HTTP: accounts, sessions, isolation, language preference and 
   r=await call('/api/progress/it',{cookie:one});assert.equal(r.data.state,null);
   r=await call('/api/progress/en',{cookie:one});assert.equal(r.data.state.xp,60);
   r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:state(),revision:0}});assert.equal(r.status,409);assert.equal(r.data.state.xp,60);
-  progress.xp=70;r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:progress,revision:1}});assert.equal(r.data.revision,2);
+  progress.xp=70;
+  progress.srs['0-0-0']={b:0,due:Date.now()+600000,reviewedAt:Date.now()};
+  progress.sess={lk:'0-0',lessonKey:'0-0',lessonMode:'learn',missedKeys:['0-0-0'],srsSeen:['0-0-0'],ex:Array.from({length:21},(_,i)=>({t:'choice',k:'0-0-0',q:'Qual a tradução?',a:'Oi',o:['Oi','Até amanhã'],stage:i===20?'retry':i<6?'discover':i<12?'practice':i<18?'recall':'use'})),i:3,ok:2,intro:1,sec:30,t:Date.now()};
+  assert(validState(progress));
+  r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:progress,revision:1}});assert.equal(r.data.revision,2);
+  r=await call('/api/progress/en',{cookie:one});assert.equal(r.data.state.sess.lessonMode,'learn');assert.equal(r.data.state.sess.ex.length,21);assert.equal(r.data.state.sess.ex[20].stage,'retry');assert.deepEqual(r.data.state.sess.missedKeys,['0-0-0']);assert.equal(r.data.state.srs['0-0-0'].reviewedAt,progress.srs['0-0-0'].reviewedAt);
   r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:{...state(),xp:-1},revision:2}});assert.equal(r.status,400);
   const bad=JSON.parse(JSON.stringify(state()));bad.fav=JSON.parse('{"__proto__":{"polluted":true}}');assert.equal(validState(bad),false);
   r=await call('/api/auth/preferences',{method:'PATCH',cookie:one,body:{language:'it'}});assert.equal(r.status,200);assert.equal((await call('/api/auth/me',{cookie:one})).data.user.preferred_language,'it');
