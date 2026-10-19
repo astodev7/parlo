@@ -26,7 +26,14 @@ function validateProgress(s){
  if(!Object.values(s.srs).every(v=>v.reviewedAt===undefined||Number.isFinite(v.reviewedAt)&&v.reviewedAt>=0))return false;
  if(s.sess){
   if(s.sess.srsSeen!==undefined&&!keyList(s.sess.srsSeen))return false;
-  if(!s.sess.ex.every(e=>e.stage===undefined||['discover','practice','recall','use','retry'].includes(e.stage)))return false;
+  if(!s.sess.ex.every(e=>e.stage===undefined||['discover','practice','recall','use','retry','listen'].includes(e.stage)))return false;
+ }
+ const builders=['identity','states','routine','negative','questions','requests','location','plans'];
+ if(s.learning?.builders!==undefined){const b=s.learning.builders;if(!b||typeof b!=='object'||Array.isArray(b)||!Object.entries(b).every(([key,v])=>builders.includes(key)&&v&&Number.isInteger(v.completed)&&v.completed>=0&&Number.isInteger(v.attempts)&&v.attempts>=0&&Number.isInteger(v.correct)&&v.correct>=0&&v.correct<=v.attempts&&Number.isFinite(v.last)&&v.last>=0))return false}
+ for(const x of [s.sess,s.last])if(x?.builderKey!==undefined&&(!builders.includes(x.builderKey)||x.lk!=='rev'||x.lessonMode!==undefined))return false;
+ if(s.sess){
+  const x=s.sess;if(x.builderDraft!==undefined&&(!x.builderKey||!x.builderDraft||!Number.isInteger(x.builderDraft.i)||x.builderDraft.i<0||x.builderDraft.i>=x.ex.length||!Array.isArray(x.builderDraft.pick)||x.builderDraft.pick.length>30||!x.builderDraft.pick.every(w=>typeof w==='string'&&w.length<1000)))return false;
+  if(!x.ex.every(e=>(e.buildIndex===undefined||x.builderKey&&Number.isInteger(e.buildIndex)&&e.buildIndex>=0&&e.buildIndex<6&&e.t==='order')&&(e.audioOrder===undefined||typeof e.audioOrder==='boolean'&&e.t==='order'&&typeof e.audioText==='string'&&e.audioText.length>0&&e.audioText.length<1000)))return false;
  }
  return true;
 }

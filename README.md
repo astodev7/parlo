@@ -1,8 +1,17 @@
-# PARLO 7 — Praticar, lembrar e reforçar
+# PARLO 8 — Escuta e oficina de frases
 
 Projeto com frontend em HTML/CSS/JavaScript e backend Node.js + PostgreSQL. O visual mantém a referência verde escura, com títulos serifados e ações coral.
 
-## Aprendizado com mais prática — v7
+## Escuta e montagem de frases — v8
++
++- As lições novas misturam três reconhecimentos por áudio (quando há voz), montagem de todas as expressões com mais de uma palavra, até dois exercícios de ouvir e montar e três atividades de conversa (continuar, compreender a situação e entender a última fala).
++- Mantém as três rodadas e o reforço dos erros, com limite de 32 atividades. O total base varia com a quantidade de expressões que podem ser montadas: até 23 atividades, mais uma revisão.
++- A área **Frases / Montar frases** tem 8 oficinas por idioma e 6 frases por oficina: identidade, estados, rotina, negativas, perguntas, pedidos, localização e planos (96 frases de prática no total).
++- Cada oficina ensina a regra, divide um exemplo em partes e retira a ajuda aos poucos. Inclui pistas, ajuda para colocar uma peça, retomada de erros (máximo de 12 atividades), rascunho salvo e contagem separada de oficinas praticadas. Não conclui lições da trilha nem marca vocábulos diferentes como aprendidos.
++- O áudio usa as vozes do navegador, como antes. Sem voz ou com sons desligados, as novas tarefas têm apoio em texto. Não requer serviço externo, chave de TTS ou arquivos de áudio.
++- Substitua os arquivos preservando `.env` e `.git`; atualize também o validador compartilhado com o servidor. Commit e push. Sem migração SQL ou variável de ambiente adicional.
++
++## Aprendizado com mais prática — v7
 
 - Cada etapa nova tem três rodadas com as seis expressões: reconhecimento, prática guiada e recordação escrita. São 20 atividades, mais uma revisão de outro assunto quando disponível.
 - As respostas erradas voltam após outras atividades quando possível, em outro formato. Limite de duas retomadas por expressão e 32 atividades por sessão, para evitar repetição infinita.
@@ -174,3 +183,7 @@ Validação da v5: integridade e IDs das novas entradas em ambos os idiomas; exe
 Validação da v6: testes automatizados de filtros combinados e limpeza nos dois idiomas, busca, unidades, favoritos e geração do menu de cursos; suíte de lições e integração PostgreSQL/HTTP. O novo layout não foi validado em navegador nesta execução.
 
 Validação da v7: todas as 72 lições, três exposições de cada expressão, correção e retomada após recarregar, filas de erro limitadas a 32 atividades, prática extra sem avanço, intervalos de revisão e compatibilidade com sessões antigas. Integração PostgreSQL/HTTP cobre salvar e recuperar sessões novas com a fila de reforço. Sem conferência visual em navegador nesta execução.
+
+Validação v8: testes de lições com e sem voz, reprodução de trechos de conversa, ouvir e montar, conclusão das 16 oficinas, pistas, peças iniciais, rascunhos retomados, filas de erro limitadas e separação do progresso da trilha. Os testes de voz verificam a chamada da API do navegador, não a qualidade sonora. Layout sem conferência visual no navegador nesta execução.
+
+A integração PostgreSQL/HTTP também verifica salvar e recuperar o rascunho das peças e o histórico das oficinas, além de rejeitar identificadores inválidos.
