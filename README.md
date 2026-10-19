@@ -1,8 +1,19 @@
-# PARLO 8 — Escuta e oficina de frases
+# PARLO 9 — Gramática com sequência e pré-requisitos
 
 Projeto com frontend em HTML/CSS/JavaScript e backend Node.js + PostgreSQL. O visual mantém a referência verde escura, com títulos serifados e ações coral.
 
-## Escuta e montagem de frases — v8
+## Gramática conectada ao percurso — v9
++
++- São **14 regras introdutórias por idioma**, com explicação, exemplos traduzidos, alertas de uso e pré-requisitos: cumprimentos, identidade, estados, artigos, presente, negativas, perguntas, pedidos, localização, rotina, compras, planos, problemas e passado.
++- A área **Gramática passo a passo** aparece no início e na trilha. Qualquer regra pode ser lida como referência; sua verificação fica disponível após as bases anteriores.
++- Cada verificação tem quatro questões de completar e duas montagens. Para concluir, é necessário acertar pelo menos cinco das seis, incluindo as duas montagens. Não há pistas durante a resposta; a explicação vem após verificar. Leitura e contagem de repetições não equivalem a aprovação.
++- Ao iniciar uma lição nova ou oficina de frases, o aplicativo encontra o primeiro pré-requisito pendente e ensina sua regra antes de abrir a atividade. Ao concluir a verificação, um botão permite continuar a preparação e retornar à lição ou oficina escolhida.
++- Lições antigas concluídas e sessões em andamento são preservadas e podem ser retomadas. O progresso anterior não é convertido automaticamente em aprovação de gramática.
++- Erros de escrita, montagem e preenchimento nas lições recomendam rever a regra correspondente. Erros de vocabulário misturado e compreensão não são tratados automaticamente como falhas de gramática. As regras verificadas também recebem revisão após três dias. Uma recomendação de revisão não bloqueia novamente uma regra já verificada.
++- Leitura, resultados e revisões de gramática ficam salvos por idioma e por conta; não marcam vocabulário ou lições como concluídos. O percurso é introdutório, não uma certificação de nível nem um currículo de fluência completo.
++- Atualize **todos os arquivos**, incluindo o novo `public/grammar.js`, `public/index.html`, `public/app.js`, `public/styles.css`, o validador e o servidor. Preserve `.env` e `.git`, faça commit e push. Sem migração SQL, API de IA ou nova variável de ambiente.
++
++## Escuta e montagem de frases — v8
 +
 +- As lições novas misturam três reconhecimentos por áudio (quando há voz), montagem de todas as expressões com mais de uma palavra, até dois exercícios de ouvir e montar e três atividades de conversa (continuar, compreender a situação e entender a última fala).
 +- Mantém as três rodadas e o reforço dos erros, com limite de 32 atividades. O total base varia com a quantidade de expressões que podem ser montadas: até 23 atividades, mais uma revisão.
@@ -187,3 +198,7 @@ Validação da v7: todas as 72 lições, três exposições de cada expressão, 
 Validação v8: testes de lições com e sem voz, reprodução de trechos de conversa, ouvir e montar, conclusão das 16 oficinas, pistas, peças iniciais, rascunhos retomados, filas de erro limitadas e separação do progresso da trilha. Os testes de voz verificam a chamada da API do navegador, não a qualidade sonora. Layout sem conferência visual no navegador nesta execução.
 
 A integração PostgreSQL/HTTP também verifica salvar e recuperar o rascunho das peças e o histórico das oficinas, além de rejeitar identificadores inválidos.
+
+Validação v9: as 28 verificações (inglês e italiano), pré-requisitos acíclicos, leitura sem aprovação automática, critério de cinco acertos mais duas montagens, tentativas insuficientes, retomada sem recontar respostas, retorno às lições/oficinas, recomendações de revisão e compatibilidade com progresso anterior. A suíte anterior continua cobrindo lições e oficinas com pré-requisitos já verificados. Sem conferência visual em navegador nesta execução.
+
+A integração PostgreSQL/HTTP verifica o novo arquivo público `grammar.js`, o salvamento de aprovações e tentativas em andamento, o retorno à lição e a separação entre inglês e italiano.

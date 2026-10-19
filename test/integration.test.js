@@ -39,12 +39,17 @@ test('PostgreSQL + HTTP: accounts, sessions, isolation, language preference and 
   r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:workshop,revision:2}});assert.equal(r.status,200);assert.equal(r.data.revision,3);
   r=await call('/api/progress/en',{cookie:one});assert.equal(r.data.state.sess.builderKey,'identity');assert.deepEqual(r.data.state.sess.builderDraft.pick,['I','am']);assert.equal(r.data.state.learning.builders.identity.completed,1);
   workshop.sess.builderKey='invalid';r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:workshop,revision:3}});assert.equal(r.status,400);
+  const grammar=state();grammar.learning={topics:{},mistakes:[],grammar:{greetings:{read:1,passed:1,attempts:1,best:6,score:6,last:Date.now(),due:Date.now()+3*864e5,needsReview:0}}};
+  grammar.sess={lk:'rev',grammarKey:'identity',grammarResults:[1],returnLesson:'1-0',ex:Array.from({length:6},(_,i)=>i<4?{t:'cloze',k:'1-0-0',q:'I ____ a student',a:'am',o:['am','is','are'],grammarIndex:i}:{t:'order',k:'1-0-0',q:'Monte',a:'I am a student',w:['student','a','I','am'],grammarIndex:i}),i:1,ok:1,intro:1,sec:12,t:Date.now()};
+  r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:grammar,revision:3}});assert.equal(r.status,200);assert.equal(r.data.revision,4);
+  r=await call('/api/progress/en',{cookie:one});assert.equal(r.data.state.learning.grammar.greetings.passed,1);assert.equal(r.data.state.sess.grammarKey,'identity');assert.deepEqual(r.data.state.sess.grammarResults,[1]);assert.equal(r.data.state.sess.returnLesson,'1-0');assert.equal((await call('/api/progress/it',{cookie:one})).data.state,null);
+  grammar.learning.grammar.greetings.passed=2;r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:grammar,revision:4}});assert.equal(r.status,400);
   r=await call('/api/auth/preferences',{method:'PATCH',cookie:one,body:{language:'it'}});assert.equal(r.status,200);assert.equal((await call('/api/auth/me',{cookie:one})).data.user.preferred_language,'it');
   const secondSession=(await call('/api/auth/login',{method:'POST',body:{email:'one@example.com',password:'safe-password-123'}})).cookie.split(';')[0];
   r=await call('/api/auth/password',{method:'POST',cookie:one,body:{currentPassword:'safe-password-123',password:'new-password-456'}});assert.equal(r.status,200);const renewed=r.cookie.split(';')[0];assert.equal((await call('/api/auth/me',{cookie:secondSession})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:one})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user.email,'one@example.com');
   await call('/api/auth/logout',{method:'POST',cookie:renewed,body:{}});assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user,null);
   for(const asset of ['/.env','/server/repository.js','/db/schema.sql'])assert.equal((await call(asset)).status,404);
-  for(const route of ['/','/english.js','/courses.js','/learning.js','/vocabulary.js','/progress-validator.cjs','/privacidade','/termos','/cookies','/robots.txt','/sitemap.xml'])assert.equal((await call(route)).status,200,route);
+  for(const route of ['/','/english.js','/courses.js','/learning.js','/vocabulary.js','/grammar.js','/progress-validator.cjs','/privacidade','/termos','/cookies','/robots.txt','/sitemap.xml'])assert.equal((await call(route)).status,200,route);
   const home=await call('/');assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
   assert.equal(await repo.hitLimit('a'.repeat(64),1),false);assert.equal(await repo.hitLimit('a'.repeat(64),1),true);
   await db.exec("CREATE ROLE anonymous_user; SET ROLE anonymous_user;");await assert.rejects(db.query('SELECT * FROM parlo_users'));await db.exec('RESET ROLE');

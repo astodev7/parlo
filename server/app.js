@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {hashPassword,verifyPassword,newToken,tokenHash,validPassword,validState} from './security.js';
 const publicDir=new URL('../public/',import.meta.url);
-const assets={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/vocabulary.js':'vocabulary.js','/courses.js':'courses.js','/learning.js':'learning.js','/progress-validator.cjs':'progress-validator.cjs','/english.js':'english.js','/privacidade':'privacy.html','/termos':'terms.html','/cookies':'cookies.html'};
+const assets={'/':'index.html','/index.html':'index.html','/styles.css':'styles.css','/app.js':'app.js','/vocabulary.js':'vocabulary.js','/grammar.js':'grammar.js','/courses.js':'courses.js','/learning.js':'learning.js','/progress-validator.cjs':'progress-validator.cjs','/english.js':'english.js','/privacidade':'privacy.html','/termos':'terms.html','/cookies':'cookies.html'};
 const types={html:'text/html; charset=utf-8',css:'text/css; charset=utf-8',js:'text/javascript; charset=utf-8',cjs:'text/javascript; charset=utf-8'};
 const publicUser=u=>({id:u.id,email:u.email,name:u.name,preferred_language:u.preferred_language});
 export function createApp(repo,{siteURL='http://localhost:3000',production=false}={}){

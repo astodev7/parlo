@@ -35,6 +35,15 @@ function validateProgress(s){
   const x=s.sess;if(x.builderDraft!==undefined&&(!x.builderKey||!x.builderDraft||!Number.isInteger(x.builderDraft.i)||x.builderDraft.i<0||x.builderDraft.i>=x.ex.length||!Array.isArray(x.builderDraft.pick)||x.builderDraft.pick.length>30||!x.builderDraft.pick.every(w=>typeof w==='string'&&w.length<1000)))return false;
   if(!x.ex.every(e=>(e.buildIndex===undefined||x.builderKey&&Number.isInteger(e.buildIndex)&&e.buildIndex>=0&&e.buildIndex<6&&e.t==='order')&&(e.audioOrder===undefined||typeof e.audioOrder==='boolean'&&e.t==='order'&&typeof e.audioText==='string'&&e.audioText.length>0&&e.audioText.length<1000)))return false;
  }
+ const grammarKeys=['greetings','identity','states','articles','present','negative','questions','requests','location','routine','shopping','plans','problems','past'];
+ if(s.learning?.grammar!==undefined){const g=s.learning.grammar;if(!g||typeof g!=='object'||Array.isArray(g)||!Object.entries(g).every(([key,v])=>grammarKeys.includes(key)&&v&&[0,1].includes(v.read)&&[0,1].includes(v.passed)&&[0,1].includes(v.needsReview)&&(!v.passed||v.read===1)&&Number.isInteger(v.attempts)&&v.attempts>=0&&Number.isInteger(v.best)&&v.best>=0&&v.best<=6&&Number.isInteger(v.score)&&v.score>=0&&v.score<=6&&v.score<=v.best&&Number.isFinite(v.last)&&v.last>=0&&Number.isFinite(v.due)&&v.due>=0))return false}
+ for(const x of [s.sess,s.last])if(x){
+  if(x.grammarKey!==undefined&&(!grammarKeys.includes(x.grammarKey)||x.lk!=='rev'||x.lessonMode!==undefined||x.builderKey!==undefined))return false;
+  if(x.returnLesson!==undefined&&(!x.grammarKey||!lessonKey(x.returnLesson)))return false;
+  if(x.returnBuilder!==undefined&&(!x.grammarKey||!builders.includes(x.returnBuilder)))return false;
+ }
+ if(s.sess?.grammarKey){const x=s.sess;if(x.ex.length!==6||!Array.isArray(x.grammarResults)||x.grammarResults.length>6||!x.grammarResults.every(n=>[0,1].includes(n))||x.grammarResults.reduce((a,b)=>a+b,0)!==x.ok||!x.ex.every((e,i)=>e.grammarIndex===i&&(i<4?e.t==='cloze':e.t==='order')))return false}
+ if(s.last?.grammarKey&&(![0,1].includes(s.last.grammarPassed)||s.last.n!==6))return false;
  return true;
 }
 

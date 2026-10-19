@@ -1,7 +1,12 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFile} from 'node:fs/promises';
 function context(){const input={value:'',classList:{toggle(){},add(){},remove(){}},style:{},dataset:{}};const c={console,Date,Math,JSON,structuredClone,URL,Blob,setInterval(){},setTimeout(){},clearTimeout(){},addEventListener(){},scrollTo(){},location:{hash:'#/'},navigator:{onLine:true},window:{},document:{getElementById:()=>input,addEventListener(){},documentElement:{dataset:{}},visibilityState:'visible'},indexedDB:{open(){throw Error('not available in unit test')}},matchMedia:()=>({matches:true})};return vm.createContext(c)}
-test('All bilingual lessons generate valid, completable sessions and preserve old keys',async()=>{const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}vm.runInContext(`
+test('All bilingual lessons generate valid, completable sessions and preserve old keys',async()=>{const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','grammar.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}vm.runInContext(`
 render=()=>{};
+// Regression fixtures below represent a learner whose grammar prerequisites were verified.
+function verifiedFixture(){const data=learningStats();data.grammar=data.grammar||{};for(const g of GRAMMAR_COURSE[course])data.grammar[g.id]={...emptyGrammar(),read:1,passed:1,best:6,score:6,attempts:1,last:Date.now(),due:Date.now()+3*DAY}}
+const fixtureLesson=startLesson;startLesson=function(key){verifiedFixture();return fixtureLesson(key)};
+const fixtureBuilder=startBuilder;startBuilder=function(key){verifiedFixture();return fixtureBuilder(key)};
+
 for(const lang of ['it','en']){
  setCourse(lang);S=DEF();S.p.on=1;
  if(U.length!==12||V.length!==216)throw Error('Course count '+lang);
@@ -23,13 +28,18 @@ S=DEF();S.p.on=1;startLesson('6-0');S.sess.intro=1;st={sel:'resposta incorreta'}
 `,c);assert.ok(true)});
 test('Visual course picker and combined vocabulary filters work in both languages',async()=>{
  const c=context();
- for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){
+ for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','grammar.js','app.js']){
   let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');
   if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');
   vm.runInContext(src,c,{filename:name});
  }
  vm.runInContext(`
  render=()=>{};
+// Regression fixtures below represent a learner whose grammar prerequisites were verified.
+function verifiedFixture(){const data=learningStats();data.grammar=data.grammar||{};for(const g of GRAMMAR_COURSE[course])data.grammar[g.id]={...emptyGrammar(),read:1,passed:1,best:6,score:6,attempts:1,last:Date.now(),due:Date.now()+3*DAY}}
+const fixtureLesson=startLesson;startLesson=function(key){verifiedFixture();return fixtureLesson(key)};
+const fixtureBuilder=startBuilder;startBuilder=function(key){verifiedFixture();return fixtureBuilder(key)};
+
  for(const lang of ['it','en']){
   setCourse(lang);S=DEF();S.p.on=1;
   const picker=coursePicker();
@@ -57,11 +67,16 @@ test('Visual course picker and combined vocabulary filters work in both language
 });
 test('Lesson repetition, bounded error retries, optional practice and review intervals survive resume',async()=>{
  const c=context();
- for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){
+ for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','grammar.js','app.js']){
   let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name});
  }
  vm.runInContext(`
  render=()=>{};
+// Regression fixtures below represent a learner whose grammar prerequisites were verified.
+function verifiedFixture(){const data=learningStats();data.grammar=data.grammar||{};for(const g of GRAMMAR_COURSE[course])data.grammar[g.id]={...emptyGrammar(),read:1,passed:1,best:6,score:6,attempts:1,last:Date.now(),due:Date.now()+3*DAY}}
+const fixtureLesson=startLesson;startLesson=function(key){verifiedFixture();return fixtureLesson(key)};
+const fixtureBuilder=startBuilder;startBuilder=function(key){verifiedFixture();return fixtureBuilder(key)};
+
  function answerExercise(right=true){const e=S.sess.ex[S.sess.i];st={};if(e.t==='type')document.getElementById('ti').value=right?e.a:'resposta errada';else if(e.t==='order')st.pick=right?e.a.split(' '):['errado'];else st.sel=right?e.a:'resposta errada';check()}
  for(const lang of ['it','en']){
   setCourse(lang);S=DEF();S.p.on=1;startLesson('0-0');S.sess.intro=1;
@@ -92,9 +107,14 @@ test('Lesson repetition, bounded error retries, optional practice and review int
  `,c);
 });
 test('Listening modules and bilingual sentence workshops teach, hint, resume and save independently',async()=>{
- const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}
+ const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','grammar.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}
  vm.runInContext(`
  render=()=>{};
+// Regression fixtures below represent a learner whose grammar prerequisites were verified.
+function verifiedFixture(){const data=learningStats();data.grammar=data.grammar||{};for(const g of GRAMMAR_COURSE[course])data.grammar[g.id]={...emptyGrammar(),read:1,passed:1,best:6,score:6,attempts:1,last:Date.now(),due:Date.now()+3*DAY}}
+const fixtureLesson=startLesson;startLesson=function(key){verifiedFixture();return fixtureLesson(key)};
+const fixtureBuilder=startBuilder;startBuilder=function(key){verifiedFixture();return fixtureBuilder(key)};
+
  const spoken=[];
  speechSynthesis={getVoices:()=>[{lang:'en-US'},{lang:'it-IT'}],cancel(){},speak(u){spoken.push(u.text);if(u.onend)u.onend()}};
  window.speechSynthesis=speechSynthesis;SpeechSynthesisUtterance=function(text){this.text=text};
@@ -122,6 +142,38 @@ test('Listening modules and bilingual sentence workshops teach, hint, resume and
   const bad=structuredClone(S);bad.learning.builders.identity.completed=-1;if(validateProgress(bad))throw Error('Bad builder metadata accepted');
   S=DEF();S.p.on=1;startBuilder('routine');S.sess.builderDraft={i:0,pick:[123]};if(validateProgress(S))throw Error('Bad draft accepted');S.sess=null;
   window.speechSynthesis=undefined;delete window.speechSynthesis;if(lessonExercises(U[0].l[0]).some(e=>e.t==='listen'))throw Error('No-voice fallback');window.speechSynthesis=speechSynthesis;
+ }
+ `,c);
+});
+test('Grammar prerequisites require understanding, preserve old progress and guide both languages',async()=>{
+ const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','grammar.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}
+ vm.runInContext(`
+ render=function(){};
+ function response(right){const e=S.sess.ex[S.sess.i];st={};if(e.t==='order')st.pick=right?e.a.split(' '):['errado'];else st.sel=right?e.a:'errado';check()}
+ function finishTest(wrong=[]){while(S.sess){const index=S.sess.i;response(!wrong.includes(index));if(!validateProgress(S))throw Error('Invalid grammar attempt');const results=S.sess.grammarResults.length;check();if(S.sess.grammarResults.length!==results)throw Error('Double grading');S=JSON.parse(JSON.stringify(S));st=structuredClone(S.sess.feedback);check();if(S.sess.grammarResults.length!==results)throw Error('Resume regraded');next()}if(!validateProgress(S))throw Error('Invalid result')}
+ for(const lang of ['it','en']){
+  setCourse(lang);S=DEF();S.p.on=1;location.hash='#/';
+  if(GRAMMAR_COURSE[lang].length!==14)throw Error('Course grammar count');
+  const visited=new Set();for(const g of GRAMMAR_COURSE[lang]){if(g.requires.some(k=>!visited.has(k)))throw Error('Missing or cyclic prerequisite');visited.add(g.id);if(g.quiz.length!==4||g.assembly.length!==2||g.examples.length<2)throw Error('Teaching content incomplete')}
+  startLesson('4-0');if(S.sess||!location.hash.includes('tema=greetings')||!location.hash.includes('voltar=4-0'))throw Error('Unguided advanced lesson');
+  if(!grammarLibrary().includes('Antes desta verificação')&&location.hash.includes('tema=requests'))throw Error('Prerequisite UI');
+  beginGrammar('greetings');if(S.sess)throw Error('Allowed before reading');grammarRead('greetings');if(grammarStatus('greetings').passed||grammarReady('identity'))throw Error('Reading unlocked knowledge');
+  beginGrammar('greetings');finishTest([0,1,2,3]);if(grammarStatus('greetings').passed||S.last.grammarPassed)throw Error('Failed attempt passed');
+  openGrammar('greetings');beginGrammar('greetings');finishTest([5]);if(S.last.ok!==5||S.last.grammarPassed)throw Error('Construction requirement missing');
+  openGrammar('greetings', '0-0');beginGrammar('greetings');finishTest([0]);if(!S.last.grammarPassed||!grammarReady('identity')||S.last.returnLesson!=='0-0')throw Error('Valid understanding not accepted');
+  if(!fim().includes('Continuar preparação e abrir minha lição'))throw Error('Return to lesson');
+  startLesson('0-0');if(S.sess?.lessonMode!=='learn')throw Error('Verified grammar did not open lesson');S.sess=null;
+  for(const g of GRAMMAR_COURSE[lang]){if(grammarStatus(g.id).passed)continue;openGrammar(g.id);if(!grammarReady(g.id))throw Error('Sequence blocked');readAndCheckGrammar(g.id);if(!S.sess?.grammarKey||S.sess.ex.length!==6)throw Error('Missing assessment');finishTest();if(!grammarStatus(g.id).passed)throw Error('Correct assessment rejected')}
+  if(Object.keys(S.done).length||Object.keys(S.srs).length)throw Error('Assessments falsely completed lessons');
+  if(!grammarLibrary().includes('14/14 verificações'))throw Error('Progress display');
+  startBuilder('plans');if(S.sess?.builderKey!=='plans')throw Error('Verified workshop blocked');S.sess=null;
+  startLesson('9-0');S.sess.intro=1;S.sess.i=S.sess.ex.findIndex(e=>e.t==='order');response(false);if(!grammarStatus('plans').needsReview||grammarStatus('plans').due>Date.now())throw Error('Errors did not recommend grammar review');S.sess=null;startLesson('9-1');if(!S.sess)throw Error('Review recommendation relocked knowledge');S.sess=null;
+  const bad=structuredClone(S);bad.learning.grammar.identity.best=7;if(validateProgress(bad))throw Error('Invalid grammar score accepted');
+  S=DEF();S.p.on=1;S.done['0-0']=1;startLesson('0-0');if(!S.sess||!S.done['0-0'])throw Error('Old completed lesson lost');S.sess=null;startLesson('1-0');if(S.sess||!location.hash.includes('tema=greetings'))throw Error('Old completion falsely certified grammar');
+  S=DEF();S.p.on=1;startBuilder('plans');if(S.sess||!location.hash.includes('oficina=plans'))throw Error('Workshop skipped foundations');
+  location.hash='#/gramatica?tema=identity&voltar=99-0&oficina=unknown';if(grammarTarget().lesson||grammarTarget().builder)throw Error('Invalid return target');
+  // A language's grammar status is not inferred from the other language's curriculum.
+  if(Object.keys(S.learning?.grammar||{}).length)throw Error('Fresh state inherited grammar');
  }
  `,c);
 });
