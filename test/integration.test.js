@@ -20,7 +20,7 @@ test('PostgreSQL + HTTP: accounts, sessions, isolation, language preference and 
   assert.equal((await call('/api/progress/en')).status,401);
   assert.equal((await call('/api/auth/login',{method:'POST',body:{email:'one@example.com',password:'wrong-password'}})).status,401);
   assert.equal((await call('/api/auth/login',{method:'POST',origin:'https://evil.invalid',body:{email:'one@example.com',password:'safe-password-123'}})).status,403);
-  const progress=state();progress.xp=60;progress.done['0-0']=1;progress.fav['0-0-0']=true;
+  const progress=state();progress.xp=60;progress.done['0-0']=1;progress.fav['0-0-0']=true;progress.fav['lex-123456abcdef']=true;progress.srs['lex-123456abcdef']={b:0,due:Date.now()};
   r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:progress,revision:0,user_id:r.data.user.id}});assert.equal(r.status,200);assert.equal(r.data.revision,1);
   r=await call('/api/progress/en',{cookie:two});assert.equal(r.data.state,null);assert.equal(r.data.revision,0);
   r=await call('/api/progress/it',{cookie:one});assert.equal(r.data.state,null);
@@ -34,7 +34,7 @@ test('PostgreSQL + HTTP: accounts, sessions, isolation, language preference and 
   r=await call('/api/auth/password',{method:'POST',cookie:one,body:{currentPassword:'safe-password-123',password:'new-password-456'}});assert.equal(r.status,200);const renewed=r.cookie.split(';')[0];assert.equal((await call('/api/auth/me',{cookie:secondSession})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:one})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user.email,'one@example.com');
   await call('/api/auth/logout',{method:'POST',cookie:renewed,body:{}});assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user,null);
   for(const asset of ['/.env','/server/repository.js','/db/schema.sql'])assert.equal((await call(asset)).status,404);
-  for(const route of ['/','/english.js','/courses.js','/learning.js','/progress-validator.cjs','/privacidade','/termos','/cookies','/robots.txt','/sitemap.xml'])assert.equal((await call(route)).status,200,route);
+  for(const route of ['/','/english.js','/courses.js','/learning.js','/vocabulary.js','/progress-validator.cjs','/privacidade','/termos','/cookies','/robots.txt','/sitemap.xml'])assert.equal((await call(route)).status,200,route);
   const home=await call('/');assert.match(home.headers.get('content-security-policy'),/frame-ancestors 'none'/);
   assert.equal(await repo.hitLimit('a'.repeat(64),1),false);assert.equal(await repo.hitLimit('a'.repeat(64),1),true);
   await db.exec("CREATE ROLE anonymous_user; SET ROLE anonymous_user;");await assert.rejects(db.query('SELECT * FROM parlo_users'));await db.exec('RESET ROLE');

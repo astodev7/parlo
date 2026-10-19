@@ -1,6 +1,34 @@
-# PARLO 4 — Conversas, situações reais e revisão por assunto
+# PARLO 5 — Vocabulário organizado para o dia a dia
 
 Projeto com frontend em HTML/CSS/JavaScript e backend Node.js + PostgreSQL. O visual mantém a referência verde escura, com títulos serifados e ações coral.
+
+## Vocabulário ampliado nesta versão
+
+A biblioteca tem **400 entradas por idioma**, sendo 216 ligadas às aulas e 184 novas entradas editoriais. São entradas de estudo (uma mesma palavra pode ter sentidos ou usos diferentes), não um ranking estatístico de frequência.
+
+| Seção | Entradas por idioma | Organização |
+| --- | ---: | --- |
+| Verbos essenciais | 50 | Essenciais, movimento, rotina e comunicação; formas úteis e exemplos |
+| Palavras do dia a dia | 48 | Casa, pessoas/sentimentos, tempo/rotina, cidade/transporte, trabalho/estudo e tecnologia |
+| Frases do cotidiano | 24 | Perguntas, necessidades/imprevistos e conversas/opiniões |
+| Linguagem formal | 12 | Pedidos educados e comunicação profissional |
+| Linguagem informal | 12 | As mesmas 12 intenções em um registro mais próximo |
+| Gírias e expressões coloquiais | 16 | Notas de contexto e região; não confundir com linguagem formal |
+| Conectores e respostas | 12 | Ligar ideias, explicar motivos e responder |
+| Falsos amigos | 10 | Significados que podem causar confusão com o português |
+| Vocabulário das aulas | 216 | Separado pelas unidades existentes |
+
+Cada entrada nova tem tradução, exemplo original e tradução do exemplo. Os verbos mostram formas de uso; formal e informal têm comparação; expressões coloquiais têm notas de adequação e, quando pertinente, região. A busca considera ambos os idiomas, exemplos e notas; há filtros por registro, assunto e favoritos, com paginação de 18 resultados.
+
+Favoritos novos aparecem na tela Salvos e podem entrar em revisão. O botão Praticar seleção usa até oito itens do conjunto filtrado. As chaves das lições antigas foram preservadas; as entradas editoriais usam IDs lex- distintos e validados pelo backend.
+
+O vocabulário editorial está em `public/vocabulary.js`. Não modifique IDs de entradas já publicadas ao apenas revisar grafia ou exemplos. As regras de áudio permanecem as da versão anterior: voz nativa do navegador quando disponível, sem MP3s novos neste pacote.
+
+As notas foram redigidas para este material, com conferência pontual de expressões em dicionários: https://dictionary.cambridge.org/dictionary/english/no-worries ; https://dictionary.cambridge.org/dictionary/english/cheers ; https://www.treccani.it/vocabolario/boh/ ; https://www.treccani.it/vocabolario/magari/ . Os exemplos e traduções são originais, não transcrições desses dicionários.
+
+## Atualizar da versão 4
+
+Copie os arquivos sobre a pasta do projeto atual, preservando `.env` e `.git`. Inclua o novo `public/vocabulary.js` e atualize também o backend e o validador compartilhado: eles reconhecem os novos IDs de favoritos/revisões. Faça commit e push. **Não precisa recriar o banco ou executar uma nova migração SQL.** As mesmas variáveis `DATABASE_URL` e `SITE_URL` continuam válidas.
 
 ## Atualizar a versão já publicada
 
@@ -122,3 +150,5 @@ Também foram exercitados no Chromium: cadastro escolhendo inglês, lição comp
 Referências técnicas: https://nodejs.org/api/crypto.html e https://www.postgresql.org/docs/current/sql-insert.html.
 
 Referência de áudio e fala: https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API e https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition.
+
+Validação da v5: integridade e IDs das novas entradas em ambos os idiomas; exemplos e pares formal/informal; filtros e contagens; favoritos e sessões lexicais aceitos pela API; preservação das 72 lições; testes no Chromium de busca, paginação, comparação, prática da seleção, sincronização e layout de celular.
