@@ -44,6 +44,12 @@ function validateProgress(s){
  }
  if(s.sess?.grammarKey){const x=s.sess;if(x.ex.length!==6||!Array.isArray(x.grammarResults)||x.grammarResults.length>6||!x.grammarResults.every(n=>[0,1].includes(n))||x.grammarResults.reduce((a,b)=>a+b,0)!==x.ok||!x.ex.every((e,i)=>e.grammarIndex===i&&(i<4?e.t==='cloze':e.t==='order')))return false}
  if(s.last?.grammarKey&&(![0,1].includes(s.last.grammarPassed)||s.last.n!==6))return false;
+ if(s.pausedSessions!==undefined){
+  const paused=s.pausedSessions;if(!paused||typeof paused!=='object'||Array.isArray(paused)||Object.keys(paused).length>8)return false;
+  const core={...s};delete core.pausedSessions;
+  for(const [key,session] of Object.entries(paused))if(!/^[a-z0-9:-]{1,80}$/.test(key)||!session||!validateProgress({...core,sess:session,last:null}))return false;
+ }
+ if(s.sess?.uiDraft!==undefined){const d=s.sess.uiDraft;if(!d||typeof d!=='object'||Array.isArray(d))return false;if(d.pick!==undefined&&(!Array.isArray(d.pick)||d.pick.length>30||!d.pick.every(w=>typeof w==='string'&&w.length<1000)))return false;if(d.ti!==undefined&&(typeof d.ti!=='string'||d.ti.length>3000))return false;if(d.sel!==undefined&&(typeof d.sel!=='string'||d.sel.length>3000))return false}
  return true;
 }
 

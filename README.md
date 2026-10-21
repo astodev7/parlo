@@ -1,8 +1,18 @@
-# PARLO 9 — Gramática com sequência e pré-requisitos
+# PARLO 10 — Correção da troca e retomada de atividades
 
 Projeto com frontend em HTML/CSS/JavaScript e backend Node.js + PostgreSQL. O visual mantém a referência verde escura, com títulos serifados e ações coral.
 
-## Gramática conectada ao percurso — v9
+## Correção de sessões — v10
++
++- Abrir outra lição, prática, oficina ou verificação pausa a atividade anterior e abre a escolhida. A sessão anterior não bloqueia mais todo o aplicativo.
++- O primeiro conjunto de lições (Cumprimentos, Despedidas e Cortesia) pode ser aberto diretamente; as unidades seguintes mantêm sua preparação gramatical. Despedidas não redireciona para a verificação de Cumprimentos.
++- A tela inicial mostra o tipo e o nome reais da atividade: lição, revisão, prática extra, oficina ou verificação. Uma revisão não é mais apresentada como a próxima lição da trilha.
++- O painel **Gerenciar atividades** lista a atividade atual e as pausadas, com ações de retomar e encerrar apenas o rascunho. Não apaga XP ou lições concluídas.
++- As pausadas mantêm as questões, o ponto em que você estava, as respostas já verificadas e o rascunho da resposta. Ficam salvas por conta e por idioma. Limite de oito atividades pausadas e proteção de tamanho para continuar dentro do limite de sincronização.
++- Sessões com cursor inválido não bloqueiam a navegação nem apagam o restante de um perfil válido. Uma resposta já corrigida não recebe pontos novamente após retomar.
++- Para atualizar, substitua os arquivos do projeto, incluindo `public/app.js`, `public/styles.css` e `public/progress-validator.cjs`. Preserve `.env` e `.git` e faça commit/push. Sem nova migração nem variável de ambiente.
++
++## Gramática conectada ao percurso — v9
 +
 +- São **14 regras introdutórias por idioma**, com explicação, exemplos traduzidos, alertas de uso e pré-requisitos: cumprimentos, identidade, estados, artigos, presente, negativas, perguntas, pedidos, localização, rotina, compras, planos, problemas e passado.
 +- A área **Gramática passo a passo** aparece no início e na trilha. Qualquer regra pode ser lida como referência; sua verificação fica disponível após as bases anteriores.
@@ -202,3 +212,5 @@ A integração PostgreSQL/HTTP também verifica salvar e recuperar o rascunho da
 Validação v9: as 28 verificações (inglês e italiano), pré-requisitos acíclicos, leitura sem aprovação automática, critério de cinco acertos mais duas montagens, tentativas insuficientes, retomada sem recontar respostas, retorno às lições/oficinas, recomendações de revisão e compatibilidade com progresso anterior. A suíte anterior continua cobrindo lições e oficinas com pré-requisitos já verificados. Sem conferência visual em navegador nesta execução.
 
 A integração PostgreSQL/HTTP verifica o novo arquivo público `grammar.js`, o salvamento de aprovações e tentativas em andamento, o retorno à lição e a separação entre inglês e italiano.
+
+Validação v10: reproduz o bloqueio Cumprimentos → Despedidas nos dois idiomas, pausas e retomadas de lições e verificações, nomenclatura de revisão, preservação de XP e lições, sessão inválida, retomada sem duplicar pontos e encerramento só do rascunho. A integração PostgreSQL/HTTP salva e recupera a atividade atual junto das pausadas, verifica a separação de idiomas e rejeita rascunhos inválidos. Sem conferência visual em navegador nesta execução.

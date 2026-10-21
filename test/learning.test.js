@@ -93,7 +93,7 @@ const fixtureBuilder=startBuilder;startBuilder=function(key){verifiedFixture();r
   const anotherKey=U[0].l[0].w[1].k;if(S.srs[anotherKey].b!==1||S.srs[anotherKey].due>Date.now()+DAY+1000)throw Error('Repetition falsely spaced');
   if(!fim().includes('Praticar mais:')||!fim().includes('Continuar:'))throw Error('Result actions missing');
   const before=S.srs[anotherKey].b;practiceMore('0-0');if(S.sess.lk!=='rev'||S.sess.lessonKey!=='0-0'||S.sess.ex.length!==17)throw Error('Extra practice scope');
-  const ongoing=JSON.stringify(S.sess);practiceMore('0-1');if(JSON.stringify(S.sess)!==ongoing)throw Error('Active session overwritten');
+  const oldIndex=S.sess.i;practiceMore('0-1');if(!S.pausedSessions['extra:0-0']||S.sess.lessonKey!=='0-1')throw Error('Practice not paused on switch');practiceMore('0-0');if(S.sess.i!==oldIndex)throw Error('Practice not restored');
   while(S.sess){answerExercise(true);if(!validateProgress(S))throw Error('Invalid practice');next()}
   if(S.done['0-0']!==1||S.done['0-1'])throw Error('Extra practice advanced course');
   if(S.srs[anotherKey].b!==before)throw Error('Same-day extra practice falsely spaced');
@@ -131,7 +131,7 @@ const fixtureBuilder=startBuilder;startBuilder=function(key){verifiedFixture();r
    const html=lessonView();if(st.pick.length!==1||!html.includes('tile'))throw Error('Guided beginning');
    builderHelp();if(!st.builderHelp.includes('próxima peça'))throw Error('Hint missing');addBuilderPiece();if(st.pick.length!==2)throw Error('Guided insertion');
    lessonView();const saved=JSON.stringify(S);S=JSON.parse(saved);st={};lessonView();if(st.pick.length!==2)throw Error('Draft not restored');
-   const snapshot=JSON.stringify(S.sess);startBuilder(b.id==='identity'?'states':'identity');if(JSON.stringify(S.sess)!==snapshot)throw Error('Session replaced');
+   const savedIndex=S.sess.i;startBuilder(b.id==='identity'?'states':'identity');if(!S.pausedSessions['builder:'+b.id])throw Error('Workshop draft missing');startBuilder(b.id);if(S.sess.i!==savedIndex||S.sess.builderKey!==b.id)throw Error('Workshop not restored');
    let first=true;
    while(S.sess){const e=S.sess.ex[S.sess.i];st={pick:first?['errado']:e.a.split(' ')};first=false;check();if(!validateProgress(S))throw Error('Invalid workshop state');const count=S.sess.ex.length;check();if(S.sess.ex.length!==count)throw Error('Duplicate retry');next()}
    if(S.learning.builders[b.id].completed!==1||S.learning.builders[b.id].attempts!==7||S.last.builderKey!==b.id||!fim().includes('Escolher outra oficina'))throw Error('Workshop completion');
@@ -174,6 +174,34 @@ test('Grammar prerequisites require understanding, preserve old progress and gui
   location.hash='#/gramatica?tema=identity&voltar=99-0&oficina=unknown';if(grammarTarget().lesson||grammarTarget().builder)throw Error('Invalid return target');
   // A language's grammar status is not inferred from the other language's curriculum.
   if(Object.keys(S.learning?.grammar||{}).length)throw Error('Fresh state inherited grammar');
+ }
+ `,c);
+});
+test('Opening Despedidas pauses Cumprimentos, labels activities accurately and preserves account progress',async()=>{
+ const c=context();for(const name of ['progress-validator.cjs','english.js','courses.js','learning.js','vocabulary.js','grammar.js','app.js']){let src=await readFile(new URL('../public/'+name,import.meta.url),'utf8');if(name==='app.js')src=src.replace(/\nboot\(\);\s*$/,'');vm.runInContext(src,c,{filename:name})}
+ vm.runInContext(`
+ render=function(){};
+ for(const lang of ['it','en']){
+  setCourse(lang);S=DEF();S.p.on=1;S.xp=940;S.done['0-0']=1;
+  startLesson('0-0');S.sess.intro=1;S.sess.i=3;st={sel:S.sess.ex[3].o[0]};const choice=st.sel;
+  startLesson('0-1');if(S.sess.lk!=='0-1'||location.hash!=='#/lic'||!S.pausedSessions['lesson:0-0'])throw Error('Despedidas redirected or blocked');
+  if(S.xp!==940||S.done['0-0']!==1||!validateProgress(S))throw Error('Progress changed');
+  startLesson('0-0');if(S.sess.i!==3||st.sel!==choice||!S.pausedSessions['lesson:0-1'])throw Error('Lesson draft not restored');
+  S=JSON.parse(JSON.stringify(S));st=restoreSessionUI(S.sess);if(st.sel!==choice)throw Error('Draft lost on reload');
+  pauseLearningSession();if(S.sess||!learningSessionsView().includes('Nenhuma atividade em andamento'))throw Error('Pause did not release session');
+  resumeLearningSession('lesson:0-1');if(S.sess.lk!=='0-1')throw Error('Draft resume mismatch');
+  endLearningSession('active');if(S.sess||S.xp!==940||S.done['0-0']!==1)throw Error('Ending draft erased progress');
+  S.pausedSessions={};openGrammar('greetings');readAndCheckGrammar('greetings');if(activityName(S.sess).kind!=='Verificação de gramática')throw Error('Grammar mislabeled');
+  const q=S.sess.ex[0];st={sel:q.a};check();const score=S.sess.ok;
+  startLesson('0-1');if(S.sess.lk!=='0-1'||!S.pausedSessions['grammar:greetings'])throw Error('Grammar blocked lesson');
+  beginGrammar('greetings');if(S.sess.grammarKey!=='greetings'||!st.res)throw Error('Grammar feedback not restored');check();if(S.sess.ok!==score)throw Error('Paused feedback scored twice');
+  endLearningSession('active');S.pausedSessions={};
+  S.sess={lk:'rev',practiceTopic:'greetings',ex:[mkEx(V[0],'choice')],i:0,ok:0,intro:1,sec:0,t:Date.now()};if(activityName(S.sess).kind!=='Revisão')throw Error('Review mislabeled as Cumprimentos');
+  startLesson('0-1');if(S.sess.lk!=='0-1'||!S.pausedSessions['review:greetings'])throw Error('Review blocked lesson');
+  const broken={...structuredClone(S),sess:{...S.sess,i:999}};const restored=restoreState(broken);if(restored.sess!==null||restored.xp!==940||restored.done['0-0']!==1)throw Error('Stale cursor reset profile');
+  S.sess.i=999;startLesson('0-2');if(S.sess.lk!=='0-2'||S.xp!==940)throw Error('Stale session kept blocking');
+  const invalid=structuredClone(S);invalid.pausedSessions.bad={lk:'missing'};if(validateProgress(invalid))throw Error('Invalid paused session accepted');
+  endLearningSession('active');if(!validateProgress(S))throw Error('Invalid final draft state');
  }
  `,c);
 });

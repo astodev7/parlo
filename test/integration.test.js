@@ -44,6 +44,12 @@ test('PostgreSQL + HTTP: accounts, sessions, isolation, language preference and 
   r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:grammar,revision:3}});assert.equal(r.status,200);assert.equal(r.data.revision,4);
   r=await call('/api/progress/en',{cookie:one});assert.equal(r.data.state.learning.grammar.greetings.passed,1);assert.equal(r.data.state.sess.grammarKey,'identity');assert.deepEqual(r.data.state.sess.grammarResults,[1]);assert.equal(r.data.state.sess.returnLesson,'1-0');assert.equal((await call('/api/progress/it',{cookie:one})).data.state,null);
   grammar.learning.grammar.greetings.passed=2;r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:grammar,revision:4}});assert.equal(r.status,400);
+  grammar.learning.grammar.greetings.passed=1;grammar.pausedSessions={'grammar:identity':structuredClone(grammar.sess)};
+  grammar.pausedSessions['grammar:identity'].uiDraft={sel:'are'};
+  grammar.sess={lk:'0-1',ex:[{t:'choice',k:'0-1-0',q:'Até amanhã',a:'See you tomorrow',o:['See you tomorrow','Hello']}],i:0,ok:0,intro:1,sec:0,t:Date.now()};
+  r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:grammar,revision:4}});assert.equal(r.status,200);assert.equal(r.data.revision,5);
+  r=await call('/api/progress/en',{cookie:one});assert.equal(r.data.state.sess.lk,'0-1');assert.equal(r.data.state.pausedSessions['grammar:identity'].grammarKey,'identity');assert.equal(r.data.state.pausedSessions['grammar:identity'].uiDraft.sel,'are');assert.equal((await call('/api/progress/it',{cookie:one})).data.state,null);
+  grammar.pausedSessions['grammar:identity'].i=999;r=await call('/api/progress/en',{method:'PUT',cookie:one,body:{state:grammar,revision:5}});assert.equal(r.status,400);
   r=await call('/api/auth/preferences',{method:'PATCH',cookie:one,body:{language:'it'}});assert.equal(r.status,200);assert.equal((await call('/api/auth/me',{cookie:one})).data.user.preferred_language,'it');
   const secondSession=(await call('/api/auth/login',{method:'POST',body:{email:'one@example.com',password:'safe-password-123'}})).cookie.split(';')[0];
   r=await call('/api/auth/password',{method:'POST',cookie:one,body:{currentPassword:'safe-password-123',password:'new-password-456'}});assert.equal(r.status,200);const renewed=r.cookie.split(';')[0];assert.equal((await call('/api/auth/me',{cookie:secondSession})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:one})).data.user,null);assert.equal((await call('/api/auth/me',{cookie:renewed})).data.user.email,'one@example.com');
